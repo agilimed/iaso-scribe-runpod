@@ -7,18 +7,37 @@ RUN apt-get update && apt-get install -y \
     git \
     build-essential \
     cmake \
+    python3-dev \
+    libcublas-dev-12-1 \
+    cuda-toolkit-12-1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
+# Set CUDA paths for building
+ENV CUDA_HOME=/usr/local/cuda-12.1
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies with CUDA support for llama-cpp-python
-ENV CMAKE_ARGS="-DLLAMA_CUBLAS=on"
+# Upgrade pip and install build tools
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# Install Python dependencies with proper CUDA support for llama-cpp-python
+# Build llama-cpp-python from source with CUDA support
+ENV CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=all"
 ENV FORCE_CMAKE=1
-RUN pip install --no-cache-dir -r requirements.txt
+ENV LLAMA_CUBLAS=1
+ENV CUDACXX=/usr/local/cuda-12.1/bin/nvcc
+
+# Install dependencies in stages for better error handling
+RUN pip install --no-cache-dir runpod>=1.3.0 faster-whisper>=1.0.0 torch>=2.0.0 requests>=2.31.0 numpy>=1.24.0 huggingface-hub>=0.20.0
+
+# Build and install llama-cpp-python separately with verbose output
+RUN pip install --no-cache-dir --verbose llama-cpp-python>=0.2.0
 
 # Copy handler
 COPY handler.py .
