@@ -14,27 +14,28 @@ This is a RunPod serverless worker that combines Whisper speech-to-text with **P
 - **Serverless**: Scales to zero, pay only for usage
 - **Advanced Medical Reasoning**: Superior clinical analysis and documentation
 
-## Deployment Options
+## Quick Deployment (2025)
 
-### Option 1: Use RunPod Templates (Recommended)
+### Deploy from GitHub (Recommended)
 
-1. Go to RunPod Console > Serverless > Templates
-2. Search for "Faster Whisper" template
-3. Fork the template and modify to include Phi-3 capabilities
+1. **Connect GitHub to RunPod**
+   - Go to [RunPod Settings](https://runpod.io/console/settings)
+   - Connect your GitHub account
 
-### Option 2: Direct Deployment
+2. **Deploy Endpoint**
+   - Go to [RunPod Serverless](https://runpod.io/console/serverless)
+   - Click "Deploy New Endpoint" → "GitHub Repo"
+   - Select: `vivek-agilimed/iaso-scribe-runpod`
+   - GPU: 16GB VRAM (RTX 4070 Ti for Community Cloud savings)
+   - Min Workers: 0, Max Workers: 3
 
-```bash
-# Build and push to RunPod
-runpod deploy --name iaso-scribe --dockerfile Dockerfile
-```
+3. **Environment Variables**
+   ```
+   WHISPER_MODEL=large-v3
+   PHI_MODEL_PATH=/models/Phi-4-reasoning-plus-Q6_K_L.gguf
+   ```
 
-### Option 3: Use Pre-built Image
-
-We maintain a pre-built image optimized for RunPod:
-```
-runpod/iaso-scribe:latest
-```
+See [DEPLOY_NOW_2025.md](DEPLOY_NOW_2025.md) for detailed instructions.
 
 ## Configuration
 
