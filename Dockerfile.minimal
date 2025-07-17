@@ -1,0 +1,30 @@
+# Minimal working Dockerfile for RunPod faster-whisper + Phi-4
+# Based on RunPod's official configurations
+
+# Use RunPod's PyTorch image which has CUDA and Python pre-configured
+FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python packages
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy handler and download script
+COPY handler.py download_models.py ./
+
+# Set environment variables
+ENV WHISPER_MODEL=medium
+ENV PHI_MODEL_PATH=/runpod-volume/models/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf
+ENV PYTHONUNBUFFERED=1
+
+# RunPod handler
+CMD ["python", "-u", "handler.py"]

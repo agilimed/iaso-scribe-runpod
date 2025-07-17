@@ -1,6 +1,6 @@
-# Use NVIDIA's official CUDA image with cuDNN 9 - same as RunPod's official faster-whisper
-# This image has cuDNN 9 built-in, which CTranslate2 needs
-FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
+# Use RunPod's PyTorch base image which includes CUDA, cuDNN, and Python
+# This is a proven working base for RunPod deployments
+FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
 
 # Remove any third-party apt sources to avoid issues with expiring keys.
 RUN rm -f /etc/apt/sources.list.d/*.list
@@ -18,16 +18,15 @@ ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 # Set working directory
 WORKDIR /app
 
-# Layer 1: System packages and Python
+# Layer 1: System packages (Python and pip already in base image)
 RUN apt-get update -y && \
     apt-get install --yes --no-install-recommends \
-        python3-pip \
-        ffmpeg libgl1 libx11-6 wget curl build-essential && \
+        ffmpeg && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
 # Layer 2: Python setup verification
-RUN python3 --version && pip3 --version
+RUN python --version && pip --version
 
 # Upgrade pip
 RUN python3 -m pip install --upgrade pip setuptools wheel
@@ -36,17 +35,16 @@ RUN python3 -m pip install --upgrade pip setuptools wheel
 COPY requirements.txt .
 
 # Install Python dependencies from requirements.txt
-# Install PyTorch with CUDA 12.1 support (compatible with CUDA 12.3 runtime)
-RUN pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
+# PyTorch is already installed in the base image
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Verify CUDA is available (RunPod base should have it configured)
 RUN nvcc --version && python3 -c "import torch; print(f'PyTorch CUDA: {torch.cuda.is_available()}')"
 
-# Layer 4: Install llama-cpp-python with CUDA 12.4 support
-# Use pre-built wheels for CUDA 12.4 to match our base image
+# Layer 4: Install llama-cpp-python with CUDA support
+# Use pre-built wheels for CUDA 12.1 to match our base image
 RUN pip install llama-cpp-python \
-    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124 \
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 \
     --force-reinstall --upgrade --no-cache-dir || \
     (echo "Pre-built wheel failed, building from source..." && \
     LLAMA_CUDA=1 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --no-cache-dir)
