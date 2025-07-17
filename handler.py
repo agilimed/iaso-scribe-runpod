@@ -134,8 +134,22 @@ def initialize_models():
         start_time = time.time()
         
         # Check CUDA availability for llama.cpp
-        n_gpu_layers = -1 if torch.cuda.is_available() else 0
-        logger.info(f"GPU layers for Phi-4: {n_gpu_layers}")
+        if torch.cuda.is_available():
+            n_gpu_layers = -1  # Use all layers on GPU
+            logger.info(f"GPU layers for Phi-4: {n_gpu_layers} (GPU mode)")
+            logger.info("Checking llama-cpp-python CUDA support...")
+            try:
+                # Test if llama-cpp was built with CUDA
+                test_llama = Llama(model_path=PHI_MODEL_PATH, n_ctx=512, n_gpu_layers=1, verbose=False)
+                del test_llama
+                logger.info("✅ llama-cpp-python has CUDA support")
+            except Exception as e:
+                logger.warning(f"⚠️ llama-cpp-python CUDA test failed: {e}")
+                logger.warning("Falling back to CPU mode for Phi-4")
+                n_gpu_layers = 0
+        else:
+            n_gpu_layers = 0
+            logger.warning("CUDA not available for Phi-4, using CPU mode")
         
         try:
             # Initialize llama.cpp with optimal settings for Phi-4-reasoning-plus

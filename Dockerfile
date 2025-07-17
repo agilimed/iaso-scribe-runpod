@@ -32,8 +32,15 @@ COPY requirements.txt .
 # Install Python dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install llama-cpp-python separately with CUDA support
-RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --no-cache-dir
+# Install CUDA development tools for llama-cpp-python compilation
+RUN apt-get update && apt-get install -y cuda-toolkit-12-3 && rm -rf /var/lib/apt/lists/*
+
+# Install llama-cpp-python with CUDA support
+# Force rebuild to ensure CUDA compilation
+ENV LLAMA_CUDA=1
+ENV CMAKE_ARGS="-DGGML_CUDA=on"
+ENV FORCE_CMAKE=1
+RUN pip install llama-cpp-python --force-reinstall --no-cache-dir --verbose
 
 # Copy handler and download script
 COPY handler.py download_models.py ./
