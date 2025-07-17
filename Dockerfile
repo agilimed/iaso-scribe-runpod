@@ -1,40 +1,39 @@
-# Use RunPod's base image with CUDA support
-FROM runpod/base:0.4.0-cuda12.1.0
+# Use NVIDIA CUDA image with cuDNN 9 for faster-whisper turbo support
+FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
+
+# Remove any third-party apt sources to avoid issues with expiring keys.
+RUN rm -f /etc/apt/sources.list.d/*.list
+
+# Set shell and noninteractive environment variables
+SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+ENV SHELL=/bin/bash
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies including nvcc for CUDA compilation
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    git \
-    build-essential \
-    cmake \
-    python3-dev \
-    wget \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Update and upgrade the system packages
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get install --yes --no-install-recommends sudo ca-certificates git wget curl bash libgl1 libx11-6 software-properties-common ffmpeg build-essential python3.10 python3.10-dev python3.10-venv python3-pip -y && \
+    ln -s /usr/bin/python3.10 /usr/bin/python && \
+    rm -f /usr/bin/python3 && \
+    ln -s /usr/bin/python3.10 /usr/bin/python3 && \
+    apt-get autoremove -y && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install build tools
-RUN python3 -m pip install --upgrade pip setuptools wheel ninja
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
 
 # Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies first (without llama-cpp-python)
-RUN pip install --no-cache-dir \
-    runpod>=1.3.0 \
-    faster-whisper>=1.0.0 \
-    torch>=2.0.0 \
-    requests>=2.31.0 \
-    numpy>=1.24.0 \
-    huggingface-hub>=0.20.0
+# Install Python dependencies from requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install llama-cpp-python using pre-built CUDA wheel
-# This avoids compilation issues
-RUN pip install llama-cpp-python \
-    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 \
-    --no-cache-dir
+# Install llama-cpp-python separately with CUDA support
+RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --no-cache-dir
 
 # Copy handler
 COPY handler.py .

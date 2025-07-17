@@ -82,22 +82,41 @@ def initialize_models():
     
     if whisper_model is None:
         logger.info(f"Loading Whisper model: {WHISPER_MODEL}")
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        compute_type = "float16" if device == "cuda" else "int8"
+        
+        # Check CUDA availability and version
+        if torch.cuda.is_available():
+            logger.info(f"CUDA available: {torch.version.cuda}")
+            logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
+            # Log GPU memory
+            gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            gpu_memory_allocated = torch.cuda.memory_allocated(0) / (1024**3)
+            logger.info(f"GPU memory: {gpu_memory:.2f} GB total, {gpu_memory_allocated:.2f} GB allocated")
+            device = "cuda"
+            compute_type = "float16"
+        else:
+            logger.warning("CUDA not available, falling back to CPU")
+            device = "cpu"
+            compute_type = "int8"
         
         logger.info(f"Whisper device: {device}, compute type: {compute_type}")
         start_time = time.time()
         
         try:
+            # Add debug environment variable to get more info
+            os.environ['CT2_VERBOSE'] = '3'
+            
             whisper_model = WhisperModel(
                 WHISPER_MODEL, 
                 device=device, 
                 compute_type=compute_type,
-                download_root=f"{MODEL_BASE_PATH}/whisper"  # Use network volume if available
+                download_root=f"{MODEL_BASE_PATH}/whisper",  # Use network volume if available
+                cpu_threads=4,  # Limit CPU threads to prevent memory issues
+                device_index=0  # Explicitly set GPU index
             )
             logger.info(f"Whisper model loaded in {time.time() - start_time:.2f}s")
         except Exception as e:
             logger.error(f"Failed to load Whisper model: {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             raise
     
     if phi_model is None:
@@ -143,15 +162,46 @@ def download_audio(url: str) -> str:
 
 def transcribe_audio(audio_path: str, language: Optional[str] = None) -> Dict[str, Any]:
     """Transcribe audio using Faster Whisper."""
-    segments, info = whisper_model.transcribe(
-        audio_path,
-        language=language,
-        beam_size=5,
-        best_of=5,
-        temperature=0,
-        vad_filter=True,
-        vad_parameters=dict(min_silence_duration_ms=500)
-    )
+    try:
+        # Log before transcription
+        logger.info(f"Transcribing audio file: {audio_path}")
+        logger.info(f"File size: {os.path.getsize(audio_path) / (1024*1024):.2f} MB")
+        
+        # Force garbage collection before transcription
+        import gc
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            logger.info(f"GPU memory before transcription: {torch.cuda.memory_allocated(0) / (1024**3):.2f} GB")
+        
+        # Use simpler parameters that are known to work
+        segments, info = whisper_model.transcribe(
+            audio_path,
+            language=language,
+            beam_size=5,
+            vad_filter=True,
+            vad_parameters=dict(
+                threshold=0.5,
+                min_speech_duration_ms=250,
+                max_speech_duration_s=float('inf'),
+                min_silence_duration_ms=2000,
+                speech_pad_ms=400
+            )
+        )
+    except RuntimeError as e:
+        if "out of memory" in str(e).lower():
+            logger.error("GPU out of memory, retrying with smaller beam size")
+            # Retry with reduced parameters
+            segments, info = whisper_model.transcribe(
+                audio_path,
+                language=language,
+                beam_size=1,
+                best_of=1,
+                temperature=0,
+                vad_filter=False
+            )
+        else:
+            raise
     
     # Collect all segments
     transcription_segments = []
