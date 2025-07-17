@@ -64,9 +64,11 @@ def download_model_if_needed():
             
             # Verify file size
             file_size = os.path.getsize(PHI_MODEL_PATH)
-            expected_size = 12.28 * 1024 * 1024 * 1024  # 12.28GB
-            if file_size < expected_size * 0.95:  # Allow 5% variance
-                raise ValueError(f"Downloaded file size {file_size} is too small, expected ~{expected_size}")
+            expected_size_min = 11.0 * 1024 * 1024 * 1024  # 11GB minimum
+            expected_size_max = 13.0 * 1024 * 1024 * 1024  # 13GB maximum
+            if file_size < expected_size_min or file_size > expected_size_max:
+                raise ValueError(f"Downloaded file size {file_size} bytes is outside expected range (11-13GB)")
+            logger.info(f"Model file size verified: {file_size / (1024**3):.2f}GB")
                 
         except Exception as e:
             # Clean up partial download
