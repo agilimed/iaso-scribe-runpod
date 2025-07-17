@@ -1,5 +1,5 @@
-# Use NVIDIA CUDA image with cuDNN 9 for faster-whisper turbo support
-FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
+# Use NVIDIA CUDA development image with cuDNN 9 for compilation support
+FROM nvidia/cuda:12.3.2-cudnn9-devel-ubuntu22.04
 
 # Remove any third-party apt sources to avoid issues with expiring keys.
 RUN rm -f /etc/apt/sources.list.d/*.list
@@ -15,7 +15,11 @@ WORKDIR /app
 # Update and upgrade the system packages
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install --yes --no-install-recommends sudo ca-certificates git wget curl bash libgl1 libx11-6 software-properties-common ffmpeg build-essential python3.10 python3.10-dev python3.10-venv python3-pip -y && \
+    apt-get install --yes --no-install-recommends \
+        sudo ca-certificates git wget curl bash libgl1 libx11-6 \
+        software-properties-common ffmpeg build-essential cmake ninja-build \
+        python3.10 python3.10-dev python3.10-venv python3-pip \
+        cuda-nvcc-12-3 cuda-cudart-dev-12-3 libcublas-dev-12-3 -y && \
     ln -s /usr/bin/python3.10 /usr/bin/python && \
     rm -f /usr/bin/python3 && \
     ln -s /usr/bin/python3.10 /usr/bin/python3 && \
@@ -32,15 +36,22 @@ COPY requirements.txt .
 # Install Python dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set CUDA paths
+ENV CUDA_HOME=/usr/local/cuda-12.3
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
+# Verify CUDA installation
+RUN nvcc --version && python3 -c "import torch; print(f'PyTorch CUDA: {torch.cuda.is_available()}')"
+
 # Install llama-cpp-python with CUDA support
-# The nvidia/cuda base image already has CUDA runtime and dev tools
 ENV LLAMA_CUDA=1
-ENV CMAKE_ARGS="-DGGML_CUDA=on"
+ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=all"
 ENV FORCE_CMAKE=1
 ENV CUDA_DOCKER_ARCH=all
 
-# Install with CUDA support
-RUN pip install llama-cpp-python --force-reinstall --upgrade --no-cache-dir --verbose
+# Install llama-cpp-python with explicit CUDA build
+RUN pip install llama-cpp-python --force-reinstall --upgrade --no-cache-dir --no-binary llama-cpp-python --verbose
 
 # Copy handler and download script
 COPY handler.py download_models.py ./
