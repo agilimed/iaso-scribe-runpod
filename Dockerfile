@@ -1,6 +1,6 @@
-# Use RunPod's latest base image with CUDA 12.9 for better compatibility
+# Use RunPod's latest base image with CUDA 12.1 for better compatibility
 # This image is optimized for RunPod infrastructure and likely cached on nodes
-FROM runpod/base:0.7.0-cuda1290
+FROM runpod/base:0.6.1-cuda12.1.0
 
 # Remove any third-party apt sources to avoid issues with expiring keys.
 RUN rm -f /etc/apt/sources.list.d/*.list
