@@ -70,7 +70,7 @@ def initialize_model():
         try:
             phi_model = Llama(
                 model_path=PHI_MODEL_PATH,
-                n_ctx=16384,  # 16K context window
+                n_ctx=32768,  # 32K context window for long medical documents
                 n_threads=min(8, os.cpu_count() or 8),
                 n_gpu_layers=n_gpu_layers,
                 verbose=False,
@@ -109,7 +109,7 @@ def handler(job):
         job_input = job["input"]
         text = job_input.get("text", "")
         prompt_type = job_input.get("prompt_type", "medical_insights")
-        max_tokens = job_input.get("max_tokens", 1024)
+        max_tokens = job_input.get("max_tokens", 4096)  # Increased for full SOAP notes
         temperature = job_input.get("temperature", 0.7)
         
         if not text:
