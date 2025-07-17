@@ -33,7 +33,9 @@ PHI_MODEL_URL = os.environ.get(
     "PHI_MODEL_URL", 
     "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-plus-GGUF/resolve/main/Phi-4-reasoning-plus-Q6_K_L.gguf"
 )
-PHI_MODEL_PATH = os.environ.get("PHI_MODEL_PATH", "/models/Phi-4-reasoning-plus-Q6_K_L.gguf")
+# Use /workspace if available (network volume), fallback to /models
+MODEL_BASE_PATH = "/workspace/models" if os.path.exists("/workspace") else "/models"
+PHI_MODEL_PATH = os.environ.get("PHI_MODEL_PATH", f"{MODEL_BASE_PATH}/Phi-4-reasoning-plus-Q6_K_L.gguf")
 
 # Initialize models globally for reuse
 whisper_model = None
@@ -42,8 +44,13 @@ phi_model = None
 def download_model_if_needed():
     """Download Phi-4-reasoning-plus model if not already present."""
     if not os.path.exists(PHI_MODEL_PATH):
-        print(f"Downloading Phi-4-reasoning-plus Q6_K_L model (12.28GB)...")
-        os.makedirs(os.path.dirname(PHI_MODEL_PATH), exist_ok=True)
+        logger.info(f"Model not found at {PHI_MODEL_PATH}")
+        logger.info(f"Downloading Phi-4-reasoning-plus Q6_K_L model (12.28GB)...")
+        
+        # Create directory with proper permissions
+        model_dir = os.path.dirname(PHI_MODEL_PATH)
+        os.makedirs(model_dir, exist_ok=True)
+        logger.info(f"Created directory: {model_dir}")
         
         # Download with progress tracking
         def download_progress(block_num, block_size, total_size):
@@ -84,7 +91,7 @@ def initialize_models():
                 WHISPER_MODEL, 
                 device=device, 
                 compute_type=compute_type,
-                download_root="/models/whisper"  # Persistent storage
+                download_root=f"{MODEL_BASE_PATH}/whisper"  # Use network volume if available
             )
             logger.info(f"Whisper model loaded in {time.time() - start_time:.2f}s")
         except Exception as e:
