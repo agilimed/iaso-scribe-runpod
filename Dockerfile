@@ -13,10 +13,11 @@ ENV SHELL=/bin/bash
 # Set working directory
 WORKDIR /app
 
-# Layer 1: System packages (rarely change)
+# Layer 1: System packages and cuDNN 9 (required for CTranslate2)
 RUN apt-get update -y && \
     apt-get install --yes --no-install-recommends \
-        ffmpeg libgl1 libx11-6 wget curl && \
+        ffmpeg libgl1 libx11-6 wget curl \
+        libcudnn9-cuda-12 && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
