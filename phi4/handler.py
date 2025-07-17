@@ -79,7 +79,8 @@ def initialize_model():
                 seed=-1,
                 f16_kv=True,
                 logits_all=False,
-                n_batch=512
+                n_batch=512,
+                rope_scaling_type=1  # Enable RoPE scaling for full context
             )
             logger.info(f"Phi-4 model loaded in {time.time() - start_time:.2f}s")
             logger.info(f"GPU layers: {n_gpu_layers}")
@@ -109,7 +110,7 @@ def handler(job):
         job_input = job["input"]
         text = job_input.get("text", "")
         prompt_type = job_input.get("prompt_type", "medical_insights")
-        max_tokens = job_input.get("max_tokens", 4096)  # Increased for full SOAP notes
+        max_tokens = job_input.get("max_tokens", 8192)  # Increased for complete medical summaries
         temperature = job_input.get("temperature", 0.7)
         
         if not text:
