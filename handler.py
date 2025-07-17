@@ -155,7 +155,7 @@ def initialize_models():
             # Initialize llama.cpp with optimal settings for Phi-4-reasoning-plus
             phi_model = Llama(
                 model_path=PHI_MODEL_PATH,
-                n_ctx=4096,  # Context window
+                n_ctx=16384,  # Increased context window for long medical conversations
                 n_threads=min(8, os.cpu_count() or 8),  # CPU threads
                 n_gpu_layers=n_gpu_layers,  # Use all GPU layers if available
                 verbose=False,
@@ -245,8 +245,35 @@ def transcribe_audio(audio_path: str, language: Optional[str] = None) -> Dict[st
 
 def generate_medical_insights(transcription: str) -> str:
     """Generate medical insights using Phi-4-reasoning-plus with advanced reasoning capabilities."""
-    # Phi-4-reasoning-plus optimized prompt for medical reasoning
-    prompt = f"""<|system|>
+    
+    # Check if transcription is too long and needs chunking
+    max_chars = 8000  # Conservative limit to leave room for prompt and response
+    
+    if len(transcription) > max_chars:
+        logger.info(f"Long transcription ({len(transcription)} chars), using summarization approach")
+        
+        # For very long transcriptions, focus on key medical information
+        prompt = f"""<|system|>
+You are an expert medical documentation assistant. The following is a long medical transcription that may be truncated. Focus on extracting the most critical medical information.
+<|end|>
+<|user|>
+Analyze this medical transcription (showing first {max_chars} characters):
+
+{transcription[:max_chars]}...
+
+Provide a concise medical summary focusing on:
+1. Chief complaint and primary symptoms
+2. Key medical findings and diagnoses
+3. Critical medications and dosages
+4. Essential follow-up actions
+5. Any urgent medical concerns
+
+Keep the summary focused and clinically relevant.
+<|end|>
+<|assistant|>"""
+    else:
+        # Original detailed prompt for shorter transcriptions
+        prompt = f"""<|system|>
 You are an expert medical documentation assistant powered by Phi-4-reasoning-plus, with advanced reasoning and analytical capabilities. Your role is to analyze medical transcriptions with clinical precision and generate comprehensive documentation.
 <|end|>
 <|user|>
