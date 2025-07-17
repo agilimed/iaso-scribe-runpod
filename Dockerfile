@@ -46,7 +46,7 @@ RUN mkdir -p /models /models/whisper && \
 
 # Set environment variables
 ENV WHISPER_MODEL=medium
-ENV PHI_MODEL_PATH=/models/Phi-4-reasoning-plus-Q6_K_L.gguf
+ENV PHI_MODEL_PATH=/models/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf
 ENV PYTHONUNBUFFERED=1
 
 # Pre-download Whisper model to speed up cold starts (optional)

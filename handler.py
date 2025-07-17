@@ -31,11 +31,11 @@ logger = logging.getLogger(__name__)
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "medium")
 PHI_MODEL_URL = os.environ.get(
     "PHI_MODEL_URL", 
-    "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-plus-GGUF/resolve/main/Phi-4-reasoning-plus-Q6_K_L.gguf"
+    "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-plus-GGUF/resolve/main/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf"
 )
 # Use /workspace if available (network volume), fallback to /models
 MODEL_BASE_PATH = "/workspace/models" if os.path.exists("/workspace") else "/models"
-PHI_MODEL_PATH = os.environ.get("PHI_MODEL_PATH", f"{MODEL_BASE_PATH}/Phi-4-reasoning-plus-Q6_K_L.gguf")
+PHI_MODEL_PATH = os.environ.get("PHI_MODEL_PATH", f"{MODEL_BASE_PATH}/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf")
 
 # Initialize models globally for reuse
 whisper_model = None
