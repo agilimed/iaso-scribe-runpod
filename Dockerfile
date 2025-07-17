@@ -18,13 +18,11 @@ ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 # Set working directory
 WORKDIR /app
 
-# Layer 1: System packages and Python (NVIDIA base doesn't include Python)
+# Layer 1: System packages and Python
 RUN apt-get update -y && \
     apt-get install --yes --no-install-recommends \
-        python3.10 python3.10-dev python3.10-venv python3-pip \
+        python3-pip \
         ffmpeg libgl1 libx11-6 wget curl build-essential && \
-    ln -s /usr/bin/python3.10 /usr/bin/python && \
-    ln -s /usr/bin/python3.10 /usr/bin/python3 && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
