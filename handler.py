@@ -181,7 +181,6 @@ def transcribe_audio(audio_path: str, language: Optional[str] = None) -> Dict[st
             beam_size=5,
             vad_filter=True,
             vad_parameters=dict(
-                threshold=0.5,
                 min_speech_duration_ms=250,
                 max_speech_duration_s=float('inf'),
                 min_silence_duration_ms=2000,
