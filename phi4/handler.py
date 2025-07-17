@@ -136,6 +136,50 @@ Please provide:
 Use clear medical terminology and reasoning.
 <|end|>
 <|assistant|>"""
+        elif prompt_type == "soap":
+            prompt = f"""<|system|>
+You are an expert medical scribe. Convert the transcription into a properly formatted SOAP note.
+<|end|>
+<|user|>
+Convert this medical transcription into a SOAP note:
+
+{text}
+
+Format as:
+
+SUBJECTIVE:
+[Patient's complaints, symptoms, and history as reported]
+
+OBJECTIVE:
+[Measurable findings, vital signs, exam results, lab values]
+
+ASSESSMENT:
+[Clinical judgment, differential diagnosis, problem list]
+
+PLAN:
+[Treatment plan, medications, follow-up, patient education]
+
+<|end|>
+<|assistant|>"""
+        elif prompt_type == "summary":
+            prompt = f"""<|system|>
+You are a medical documentation specialist. Create a concise clinical summary.
+<|end|>
+<|user|>
+Summarize this medical encounter:
+
+{text}
+
+Provide a brief clinical summary including:
+- Chief complaint
+- Key findings
+- Diagnosis/Assessment
+- Treatment plan
+- Follow-up requirements
+
+Keep it concise but complete.
+<|end|>
+<|assistant|>"""
         else:
             # Use text as direct prompt
             prompt = text
