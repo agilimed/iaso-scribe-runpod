@@ -243,8 +243,13 @@ def transcribe_audio(audio_path: str, language: Optional[str] = None) -> Dict[st
         "duration": info.duration
     }
 
-def generate_medical_insights(transcription: str) -> str:
-    """Generate medical insights using Phi-4-reasoning-plus with advanced reasoning capabilities."""
+def generate_medical_insights(transcription: str, stream_callback=None) -> str:
+    """Generate medical insights using Phi-4-reasoning-plus with advanced reasoning capabilities.
+    
+    Args:
+        transcription: The medical transcription text
+        stream_callback: Optional callback function for streaming tokens (token, metadata)
+    """
     
     # Check if transcription is too long and needs chunking
     max_chars = 8000  # Conservative limit to leave room for prompt and response
@@ -254,34 +259,42 @@ def generate_medical_insights(transcription: str) -> str:
         
         # For very long transcriptions, focus on key medical information
         prompt = f"""<|system|>
-You are an expert medical documentation assistant. The following is a long medical transcription that may be truncated. Focus on extracting the most critical medical information.
+You are an expert medical documentation assistant with step-by-step reasoning capabilities. Show your reasoning process clearly.
 <|end|>
 <|user|>
 Analyze this medical transcription (showing first {max_chars} characters):
 
 {transcription[:max_chars]}...
 
-Provide a concise medical summary focusing on:
+Provide a concise medical analysis with clear reasoning steps:
+
+## Reasoning Process:
+[Show your step-by-step thinking]
+
+## Medical Summary:
 1. Chief complaint and primary symptoms
 2. Key medical findings and diagnoses
 3. Critical medications and dosages
 4. Essential follow-up actions
 5. Any urgent medical concerns
 
-Keep the summary focused and clinically relevant.
+Show your reasoning before each conclusion.
 <|end|>
 <|assistant|>"""
     else:
         # Original detailed prompt for shorter transcriptions
         prompt = f"""<|system|>
-You are an expert medical documentation assistant powered by Phi-4-reasoning-plus, with advanced reasoning and analytical capabilities. Your role is to analyze medical transcriptions with clinical precision and generate comprehensive documentation.
+You are an expert medical documentation assistant powered by Phi-4-reasoning-plus, with advanced reasoning and analytical capabilities. Show your step-by-step reasoning process transparently.
 <|end|>
 <|user|>
 Analyze the following medical transcription using step-by-step reasoning:
 
 Transcription: {transcription}
 
-Please provide a comprehensive analysis including:
+Please provide a comprehensive analysis with visible reasoning:
+
+## Step-by-Step Reasoning:
+[Think through the medical information systematically]
 
 1. **Medical Entity Extraction**: Identify all clinically relevant entities
    - Symptoms and their characteristics (onset, duration, severity)
@@ -317,26 +330,61 @@ Provide your analysis:
 <|end|>
 <|assistant|>"""
     
-    # Generate response using llama.cpp
-    response = phi_model(
-        prompt,
-        max_tokens=1024,  # Generous token limit for detailed analysis
-        temperature=0.7,
-        top_p=0.9,
-        top_k=40,
-        repeat_penalty=1.1,
-        stop=["<|end|>", "<|user|>", "<|system|>"]
-    )
-    
-    # Extract the generated text
-    generated_text = response['choices'][0]['text']
-    
-    return generated_text.strip()
+    # Generate response using llama.cpp with streaming support
+    if stream_callback:
+        # Streaming mode - send tokens as they're generated with reasoning tracking
+        generated_tokens = []
+        current_section = "reasoning"  # Track what section we're in
+        
+        stream = phi_model(
+            prompt,
+            max_tokens=1024,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=40,
+            repeat_penalty=1.1,
+            stop=["<|end|>", "<|user|>", "<|system|>"],
+            stream=True
+        )
+        
+        for output in stream:
+            token = output['choices'][0]['text']
+            generated_tokens.append(token)
+            
+            # Track which section we're in based on content
+            full_text = ''.join(generated_tokens)
+            if "## Medical Summary:" in full_text or "## Clinical Analysis:" in full_text:
+                current_section = "analysis"
+            elif "## SOAP Note:" in full_text:
+                current_section = "soap"
+            elif "## Care Plan:" in full_text:
+                current_section = "plan"
+            
+            # Send token with metadata about current section
+            stream_callback(token, {"section": current_section, "total_tokens": len(generated_tokens)})
+            
+        return ''.join(generated_tokens).strip()
+    else:
+        # Non-streaming mode (current behavior)
+        response = phi_model(
+            prompt,
+            max_tokens=1024,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=40,
+            repeat_penalty=1.1,
+            stop=["<|end|>", "<|user|>", "<|system|>"]
+        )
+        
+        generated_text = response['choices'][0]['text']
+        return generated_text.strip()
 
 def handler(job: Dict[str, Any]) -> Dict[str, Any]:
     """
     RunPod handler function for IASO Scribe.
     Production-ready with comprehensive error handling and logging.
+    
+    Supports streaming mode for real-time insights generation.
     
     Expected input format:
     {
@@ -344,9 +392,13 @@ def handler(job: Dict[str, Any]) -> Dict[str, Any]:
             "audio": "URL or base64 encoded audio",
             "language": "en" (optional),
             "generate_insights": true (optional, default: true),
-            "return_segments": false (optional)
+            "return_segments": false (optional),
+            "stream": false (optional, enables streaming response)
         }
     }
+    
+    Note: Streaming requires RunPod to support generator responses.
+    Currently returns full response with reasoning visible.
     """
     start_time = time.time()
     request_id = job.get("id", "unknown")
@@ -411,7 +463,56 @@ def handler(job: Dict[str, Any]) -> Dict[str, Any]:
         if generate_insights and transcription_result["text"]:
             logger.info("Generating medical insights...")
             insights_start = time.time()
-            insights = generate_medical_insights(transcription_result["text"])
+            
+            # Check if streaming is requested
+            enable_stream = job_input.get("stream", False)
+            
+            if enable_stream:
+                # Streaming mode - collect tokens with reasoning metadata
+                streamed_sections = {
+                    "reasoning": [],
+                    "analysis": [],
+                    "soap": [],
+                    "plan": []
+                }
+                current_section_tokens = []
+                
+                def stream_collector(token, metadata):
+                    """Collect streamed tokens by section"""
+                    section = metadata.get("section", "reasoning")
+                    current_section_tokens.append(token)
+                    
+                    # Log progress for debugging
+                    if metadata.get("total_tokens", 0) % 50 == 0:
+                        logger.info(f"Streaming progress: {metadata.get('total_tokens')} tokens, section: {section}")
+                
+                # Process with streaming
+                insights = generate_medical_insights(transcription_result["text"], stream_callback=stream_collector)
+                
+                # Add streaming metadata to response
+                response["streaming_enabled"] = True
+                response["reasoning_visible"] = True
+            else:
+                # Non-streaming mode
+                transcription_length = len(transcription_result["text"])
+                
+                if transcription_length > 10000:
+                    # For very long transcriptions, process in semantic chunks
+                    logger.info(f"Long transcription ({transcription_length} chars), using chunked processing")
+                    
+                    # Split by paragraphs/sentences for medical context preservation
+                    chunks = transcription_result["text"].split('\n\n')
+                    if len(chunks) == 1:  # No paragraph breaks, split by sentences
+                        import re
+                        chunks = re.split(r'(?<=[.!?])\s+', transcription_result["text"])
+                    
+                    # Process most recent/relevant chunk first (often contains summary)
+                    relevant_text = '\n'.join(chunks[-min(len(chunks), 50):])  # Last 50 sentences
+                    insights = generate_medical_insights(relevant_text)
+                else:
+                    # Standard processing for normal length
+                    insights = generate_medical_insights(transcription_result["text"])
+            
             insights_time = time.time() - insights_start
             logger.info(f"Insights generated in {insights_time:.2f}s")
             
