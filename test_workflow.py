@@ -58,7 +58,7 @@ def call_phi4(text, prompt_type="soap"):
         "input": {
             "text": text,
             "prompt_type": prompt_type,
-            "max_tokens": 1024
+            "max_tokens": 4096
         }
     }
     
