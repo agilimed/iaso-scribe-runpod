@@ -39,18 +39,20 @@ RUN pip install llama-cpp-python \
 # Copy handler
 COPY handler.py .
 
-# Create models directory
-RUN mkdir -p /models /models/whisper
+# Create models directory and check disk space
+RUN mkdir -p /models /models/whisper && \
+    df -h / && \
+    echo "Disk space available: $(df -h / | awk 'NR==2 {print $4}')"
 
 # Set environment variables
-ENV WHISPER_MODEL=large-v3
+ENV WHISPER_MODEL=medium
 ENV PHI_MODEL_PATH=/models/Phi-4-reasoning-plus-Q6_K_L.gguf
 ENV PYTHONUNBUFFERED=1
 
 # Pre-download Whisper model to speed up cold starts (optional)
 ARG DOWNLOAD_WHISPER=false
 RUN if [ "$DOWNLOAD_WHISPER" = "true" ]; then \
-    python3 -c "from faster_whisper import WhisperModel; WhisperModel('large-v3', device='cpu', compute_type='int8', download_root='/models/whisper')"; \
+    python3 -c "from faster_whisper import WhisperModel; WhisperModel('medium', device='cpu', compute_type='int8', download_root='/models/whisper')"; \
     fi
 
 # Note: Phi-4 model (12.28GB) will be downloaded at runtime

@@ -28,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Model paths (will be downloaded on first run)
-WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3")
+WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "medium")
 PHI_MODEL_URL = os.environ.get(
     "PHI_MODEL_URL", 
     "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-plus-GGUF/resolve/main/Phi-4-reasoning-plus-Q6_K_L.gguf"

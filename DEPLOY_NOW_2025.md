@@ -22,7 +22,7 @@ Click the **GitHub Repo** option (usually bottom right)
 **Basic Settings:**
 ```
 Endpoint Name: iaso-scribe-phi4
-Container Disk: 20 GB
+Container Disk: 50 GB  (IMPORTANT: Needs space for models)
 ```
 
 **GPU Configuration:**
@@ -44,7 +44,7 @@ Flash Boot: Enabled ✓
 ### 6. Environment Variables (Advanced Settings)
 Click "Advanced" and add:
 ```
-WHISPER_MODEL=large-v3
+WHISPER_MODEL=medium
 PHI_MODEL_PATH=/models/Phi-4-reasoning-plus-Q6_K_L.gguf
 ```
 

@@ -4,7 +4,7 @@ This is a RunPod serverless worker that combines Whisper speech-to-text with **P
 
 ## Features
 
-- **Whisper Large-v3**: State-of-the-art speech recognition
+- **Whisper Medium**: Efficient and accurate speech recognition
 - **Phi-4-reasoning-plus Q6_K_L**: Microsoft's most advanced reasoning model
   - Uses Q8_0 for embed and output weights
   - Very high quality, near perfect accuracy
