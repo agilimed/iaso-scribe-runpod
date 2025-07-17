@@ -139,46 +139,69 @@ Use clear medical terminology and reasoning.
 <|assistant|>"""
         elif prompt_type == "soap":
             prompt = f"""<|system|>
-You are an expert medical scribe. Convert the transcription into a properly formatted SOAP note.
+You are an expert medical scribe. Convert the transcription into a properly formatted SOAP note using active voice and complete clinical details.
 <|end|>
 <|user|>
 Convert this medical transcription into a SOAP note:
 
 {text}
 
-Format as:
+Format EXACTLY as follows:
 
 SUBJECTIVE:
-[Patient's complaints, symptoms, and history as reported]
+• Chief complaint and HPI
+• Patient-reported symptoms and history
+• Relevant medical history, medications, allergies
+• Social history if relevant
 
 OBJECTIVE:
-[Measurable findings, vital signs, exam results, lab values]
+• Vital signs
+• Physical examination findings
+• ALL clinical measurements (include stations, effacement, dilation)
+• Laboratory results and imaging findings
+• Procedure details and measurements
 
 ASSESSMENT:
-[Clinical judgment, differential diagnosis, problem list]
+• Primary diagnosis with supporting evidence
+• Secondary diagnoses
+• Clinical reasoning
+• Risk factors addressed
 
 PLAN:
-[Treatment plan, medications, follow-up, patient education]
+• Immediate interventions performed
+• Medications (with exact doses and routes)
+• Monitoring parameters
+• Follow-up appointments
+• Patient education provided
+• Disposition
 
+Important: Use active voice, include ALL clinical details, and maintain exact terminology from the source.
 <|end|>
 <|assistant|>"""
         elif prompt_type == "summary":
             prompt = f"""<|system|>
-You are a medical documentation specialist. Create a concise clinical summary.
+You are a medical documentation specialist. Create a concise clinical summary using active voice and complete medical details.
 <|end|>
 <|user|>
 Summarize this medical encounter:
 
 {text}
 
-Provide a brief clinical summary including:
+Provide a comprehensive clinical summary including:
 - Chief complaint
-- Key findings
+- Key findings (include ALL clinical measurements, stations, test results)
 - Diagnosis/Assessment
 - Treatment plan
 - Follow-up requirements
 
-Keep it concise but complete.
+Important guidelines:
+1. Use active voice (e.g., "Patient had a spontaneous vaginal delivery" not "Delivery was achieved")
+2. Include ALL clinical details mentioned (stations, cord gases, specific team names)
+3. Use exact terminology from the source (e.g., "neonatal care team" not "NICU" unless specified)
+4. Include all test results and measurements
+5. Maintain clinical accuracy while being concise
+
+Keep it complete but concise.
 <|end|>
 <|assistant|>"""
         else:

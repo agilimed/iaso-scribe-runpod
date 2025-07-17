@@ -1,0 +1,98 @@
+🏥 Testing Phi-4 with Detailed Obstetric Note
+================================================================================
+Note length: 5125 characters
+Estimated tokens: ~1281 tokens
+--------------------------------------------------------------------------------
+📤 Sending request to Phi-4 endpoint...
+
+✅ Summary generated successfully!
+⏱️  Processing time: 35.43978261947632
+📊 Tokens generated: 1305
+⚡ Speed: 36.8 tokens/s
+💾 Model: phi-4-reasoning-plus-Q6_K_L
+
+================================================================================
+📄 PREGNANCY JOURNEY SUMMARY:
+================================================================================
+We are a medical documentation specialist, need to produce concise clinical summary including chief complaint, key findings, diagnosis/assessment, treatment plan, follow-up requirements. We'll produce text.
+
+Let's produce summary:
+
+Chief Complaint: Preterm contractions at 35+4 weeks gestation with history of complications (prior spontaneous abortion, tobacco use, asthma, psychosocial stressors) and possible ROM symptoms.
+
+Key Findings:
+- The patient is G2P0 at 35+4 weeks, had recurrent preterm contractions and risk factors including tobacco (stopped early second trimester), chronic mild persistent asthma controlled with salbutamol PRN, previous spontaneous abortion.
+- Prenatal course: Fetal growth appropriate; betamethasone administered twice for lung maturity due to uterine irritability episodes. At week 34, contractions intensified and cervix was 2 cm dilated, 60% effaced with bedrest advised.
+- Presentation at delivery admission: active labor with positive ROM, IUPC confirmed contraction frequency and intensity; epidural placement for pain relief, Pitocin augmentation used.
+- Delivery details: spontaneous vaginal delivery of a female infant in occiput anterior position, minimal maternal complications (episiotomy not required, small bilateral labial lacerations, hymenal remnant excised with suture), intact placenta delivered, estimated blood loss 300 mL; cord gases sent due to prematurity.
+- Infant details: Apgars of 8 and 9 at 1 and 5 minutes respectively, vigorous cry, transferred to neonatal care team for observation because of late-preterm status.
+
+Diagnosis/Assessment:
+- Spontaneous preterm labor at 35+4 weeks delivered healthy female infant with no maternal or neonatal complications.
+- Tobacco use in pregnancy (history) but cessation achieved by second trimester; no IUGR.
+- Chronic asthma controlled, no exacerbation noted.
+- History of spontaneous abortion did not affect outcome.
+- Psychosocial risk factors present (young age, limited support).
+
+Treatment Plan:
+Maternal: Monitor postpartum hemorrhage, infection, perineal healing. Vital signs q4h; lactation support; possible psychosocial assessment; pain management with NSAIDs and acetaminophen; iron and calcium supplements.
+Infant: Observation in NICU for 24-48 hours due to prematurity; monitor blood glucose and temperature; routine newborn screening and hearing test.
+
+Follow-up:
+- OB follow-up in one week for suture check and emotional well-being evaluation, then 6-week postpartum check.
+- Pediatric follow-up arranged.
+
+I'll produce answer. We'll produce summary with bullet points if possible.
+
+Let's produce answer. I'll produce answer in plain text. I'll produce summary. We'll produce answer as a clinical note: "Clinical Summary" etc.
+
+I'll produce answer accordingly.
+
+I'll produce final answer below.Patient is an 18-year-old G2P0 at 35+4 weeks gestation with a history of recurrent preterm contractions and other risk factors (prior spontaneous abortion, past tobacco use [ceased in second trimester], mild asthma, and psychosocial stressors). She presented with increased pelvic pressure, regular contractions, and vaginal discharge suggestive of possible rupture of membranes.
+
+Over the course of her high‐risk antenatal care:
+• At week 28, fundal height was reassuring, fetal growth was appropriate (35th percentile), smoking cessation counseled, and a dose of betamethasone was administered for lung maturity.
+• By week 30, intermittent dyspnea was managed with PRN salbutamol; fetal nonstress testing (NST) was reactive and cervical length measured by ultrasound was normal.
+• At week 32 she experienced regular contractions with minimal cervical change (1 cm dilation, 50% effacement); a negative fetal fibronectin test led to initiation of bedrest at home.
+• By week 34, contractions intensified (cervix 2 cm dilated, 60% effaced) and discussion about preterm labor risks was provided.
+
+At delivery admission (35+4 weeks), she arrived in active labor with:
+• Confirmed rupture of membranes (positive pooling/nitrazine test),
+• Cervical dilation of 5 cm with 70% effacement,
+• An IUPC placed to monitor contractions, and
+• Management with epidural anesthesia and Pitocin augmentation.
+
+Delivery was achieved spontaneously via vaginal route in occiput anterior position. The second stage lasted about 15 minutes; no episiotomy was required though bilateral superficial labial lacerations were noted (and a small hymenal remnant excised with one suture). The placenta was delivered intact, and estimated blood loss was 300 mL.
+
+The newborn is female with Apgars of 8 at 1 minute and 9 at 5 minutes; she exhibited a vigorous cry and appropriate initial exam but was transferred to the neonatal care team for observation due to her late-preterm status.
+
+Assessment:
+• Spontaneous preterm labor at 35+4 weeks resulting in an uncomplicated vaginal delivery of a healthy infant.
+• History of tobacco use (ceased early second trimester) with no evidence of intrauterine growth restriction.
+• Chronic, mild asthma that remained well-controlled throughout pregnancy and labor.
+• Previous spontaneous abortion did not impact the current outcome.
+• Psychosocial risk factors noted (young maternal age and limited family support).
+
+Plan:
+Maternal Care:
+• Monitor for postpartum hemorrhage, infection, and perineal healing; vital signs every 4 hours.
+• Provide lactation support and consider a psychosocial assessment before discharge.
+• Pain management using NSAIDs and acetaminophen as needed.
+• Continue iron and calcium supplementation.
+
+Infant Care:
+• Admission to the NICU for observation (24–48 hours) due to prematurity; monitor blood glucose and temperature.
+• Conduct routine newborn screening and hearing test.
+
+Follow-up:
+• Obstetric follow-up in 1 week for suture check and evaluation of emotional well-being, with a subsequent 6-week postpartum visit.
+• Pediatric follow-up has been arranged.
+
+This concise summary captures the chief complaint, key findings, diagnosis/assessment, treatment plan, and follow-up requirements for this encounter.
+================================================================================
+
+📏 Summary length: 6061 characters
+
+⚠️  Potentially missing elements: high-risk
+
+💾 Full output saved to obstetric_summary_output.json

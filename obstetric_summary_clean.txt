@@ -1,0 +1,48 @@
+OBSTETRIC CASE SUMMARY
+======================
+
+Patient is an 18-year-old G2P0 at 35+4 weeks gestation with a history of recurrent preterm contractions and other risk factors (prior spontaneous abortion, past tobacco use [ceased in second trimester], mild asthma, and psychosocial stressors). She presented with increased pelvic pressure, regular contractions, and vaginal discharge suggestive of possible rupture of membranes.
+
+Over the course of her high‐risk antenatal care:
+• At week 28, fundal height was reassuring, fetal growth was appropriate (35th percentile), smoking cessation counseled, and a dose of betamethasone was administered for lung maturity.
+• By week 30, intermittent dyspnea was managed with PRN salbutamol; fetal nonstress testing (NST) was reactive and cervical length measured by ultrasound was normal.
+• At week 32 she experienced regular contractions with minimal cervical change (1 cm dilation, 50% effacement); a negative fetal fibronectin test led to initiation of bedrest at home.
+• By week 34, contractions intensified (cervix 2 cm dilated, 60% effaced) and discussion about preterm labor risks was provided.
+
+At delivery admission (35+4 weeks), she arrived in active labor with:
+• Confirmed rupture of membranes (positive pooling/nitrazine test),
+• Cervical dilation of 5 cm with 70% effacement,
+• An IUPC placed to monitor contractions, and
+• Management with epidural anesthesia and Pitocin augmentation.
+
+Delivery was achieved spontaneously via vaginal route in occiput anterior position. The second stage lasted about 15 minutes; no episiotomy was required though bilateral superficial labial lacerations were noted (and a small hymenal remnant excised with one suture). The placenta was delivered intact, and estimated blood loss was 300 mL.
+
+The newborn is female with Apgars of 8 at 1 minute and 9 at 5 minutes; she exhibited a vigorous cry and appropriate initial exam but was transferred to the neonatal care team for observation due to her late-preterm status.
+
+Assessment:
+• Spontaneous preterm labor at 35+4 weeks resulting in an uncomplicated vaginal delivery of a healthy infant.
+• History of tobacco use (ceased early second trimester) with no evidence of intrauterine growth restriction.
+• Chronic, mild asthma that remained well-controlled throughout pregnancy and labor.
+• Previous spontaneous abortion did not impact the current outcome.
+• Psychosocial risk factors noted (young maternal age and limited family support).
+
+Plan:
+Maternal Care:
+• Monitor for postpartum hemorrhage, infection, and perineal healing; vital signs every 4 hours.
+• Provide lactation support and consider a psychosocial assessment before discharge.
+• Pain management using NSAIDs and acetaminophen as needed.
+• Continue iron and calcium supplementation.
+
+Infant Care:
+• Admission to the NICU for observation (24–48 hours) due to prematurity; monitor blood glucose and temperature.
+• Conduct routine newborn screening and hearing test.
+
+Follow-up:
+• Obstetric follow-up in 1 week for suture check and evaluation of emotional well-being, with a subsequent 6-week postpartum visit.
+• Pediatric follow-up has been arranged.
+
+METRICS:
+- Tokens generated: 1305
+- Processing time: 35.44 seconds
+- Speed: 36.8 tokens/s
+- Model: phi-4-reasoning-plus-Q6_K_L

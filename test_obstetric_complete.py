@@ -223,8 +223,8 @@ def test_obstetric_summary():
         if response.status_code == 200:
             initial_result = response.json()
             
-            # Check if job is still in progress
-            if initial_result.get("status") == "IN_PROGRESS":
+            # Check if job is queued or in progress
+            if initial_result.get("status") in ["IN_QUEUE", "IN_PROGRESS"]:
                 job_id = initial_result.get("id")
                 print(f"Job ID: {job_id}")
                 
