@@ -89,35 +89,37 @@ def initialize_model():
             raise
 
 def build_prompt_with_reasoning(text: str, prompt_type: str) -> str:
-    """Build prompt that encourages step-by-step reasoning."""
+    """Build prompt that encourages step-by-step reasoning with structured tags."""
     
     if prompt_type == "medical_insights":
         prompt = f"""<|system|>
-You are an expert medical documentation assistant. Always show your step-by-step reasoning process before providing your final answer.
+You are an expert medical documentation assistant.
+IMPORTANT: Show your step-by-step reasoning in <think>...</think> tags, then provide your final answer in <solution>...</solution> tags.
 <|end|>
 <|user|>
-Analyze this medical transcription with step-by-step reasoning:
+Analyze this medical transcription:
 
 {text}
 
-First, show your reasoning process:
-1. Identify key clinical information
-2. Analyze symptoms and findings
-3. Consider differential diagnoses
-4. Evaluate treatment options
+Structure your response with:
+<think>
+- Identify key clinical information
+- Analyze symptoms and findings  
+- Consider differential diagnoses
+- Evaluate treatment options
+</think>
 
-Then provide:
+<solution>
 1. Chief complaint and key symptoms
 2. Medical findings and observations
 3. Relevant medications with dosages
 4. Clinical assessment and diagnosis considerations
 5. Recommended follow-up actions
 6. Any urgent concerns or red flags
+</solution>
 <|end|>
-<|assistant|>Let me analyze this medical transcription step by step.
-
-**Step 1: Identifying Key Clinical Information**
-"""
+<|assistant|><think>
+Let me analyze this medical transcription step by step."""
     
     elif prompt_type == "soap":
         prompt = f"""<|system|>

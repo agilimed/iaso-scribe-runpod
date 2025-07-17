@@ -119,14 +119,15 @@ def handler(job):
         # Build prompt based on type
         if prompt_type == "medical_insights":
             prompt = f"""<|system|>
-You are an expert medical documentation assistant with step-by-step reasoning capabilities. Provide clear, structured medical insights.
+You are an expert medical documentation assistant with step-by-step reasoning capabilities. 
+IMPORTANT: Show your reasoning process in <think>...</think> tags, then provide your final medical insights in <solution>...</solution> tags.
 <|end|>
 <|user|>
 Analyze this medical transcription and provide comprehensive insights:
 
 {text}
 
-Please provide:
+First, show your reasoning in <think> tags, then provide your final answer in <solution> tags with:
 1. Chief complaint and key symptoms
 2. Medical findings and observations
 3. Relevant medications with dosages
@@ -134,19 +135,20 @@ Please provide:
 5. Recommended follow-up actions
 6. Any urgent concerns or red flags
 
-Use clear medical terminology and reasoning.
+Use clear medical terminology.
 <|end|>
 <|assistant|>"""
         elif prompt_type == "soap":
             prompt = f"""<|system|>
 You are an expert medical scribe. Convert the transcription into a properly formatted SOAP note using active voice and complete clinical details.
+IMPORTANT: Show your analysis in <think>...</think> tags, then provide the final SOAP note in <solution>...</solution> tags.
 <|end|>
 <|user|>
 Convert this medical transcription into a SOAP note:
 
 {text}
 
-Format EXACTLY as follows:
+First, analyze the information in <think> tags, then format your SOAP note in <solution> tags EXACTLY as follows:
 
 SUBJECTIVE:
 • Chief complaint and HPI
@@ -181,13 +183,14 @@ Important: Use active voice, include ALL clinical details, and maintain exact te
         elif prompt_type == "summary":
             prompt = f"""<|system|>
 You are a medical documentation specialist. Create a concise clinical summary using active voice and complete medical details.
+IMPORTANT: Show your analysis in <think>...</think> tags, then provide your final summary in <solution>...</solution> tags.
 <|end|>
 <|user|>
 Summarize this medical encounter:
 
 {text}
 
-Provide a comprehensive clinical summary including:
+First, analyze the key information in <think> tags, then provide your clinical summary in <solution> tags including:
 - Chief complaint
 - Key findings (include ALL clinical measurements, stations, test results)
 - Diagnosis/Assessment
