@@ -10,18 +10,28 @@ SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SHELL=/bin/bash
 
+# Set CUDA environment variables for proper library loading
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=$CUDA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
 # Set working directory
 WORKDIR /app
 
-# Layer 1: System packages and cuDNN 9 (required for CTranslate2)
+# Layer 1: System packages (rarely change)
 RUN apt-get update -y && \
     apt-get install --yes --no-install-recommends \
-        ffmpeg libgl1 libx11-6 wget curl \
-        libcudnn9-cuda-12 && \
+        ffmpeg libgl1 libx11-6 wget curl && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Layer 2: Python setup (RunPod base already has Python)
+# Layer 2: Setup cuDNN library paths for CTranslate2
+# RunPod base images include cuDNN, but we need to ensure it's accessible
+RUN ldconfig /usr/local/cuda/lib64 && \
+    echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf.d/cuda.conf && \
+    ldconfig
+
+# Layer 3: Python setup (RunPod base already has Python)
 RUN python3 --version && pip3 --version
 
 # Upgrade pip
