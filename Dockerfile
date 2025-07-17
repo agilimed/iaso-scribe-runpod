@@ -30,6 +30,8 @@ RUN python3 -m pip install --upgrade pip setuptools wheel
 COPY requirements.txt .
 
 # Install Python dependencies from requirements.txt
+# Install torch with CUDA support first
+RUN pip install torch --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Verify CUDA is available (RunPod base should have it configured)
