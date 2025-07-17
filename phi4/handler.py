@@ -197,9 +197,12 @@ Provide a comprehensive clinical summary including:
 Important guidelines:
 1. Use active voice (e.g., "Patient had a spontaneous vaginal delivery" not "Delivery was achieved")
 2. Include ALL clinical details mentioned (stations, cord gases, specific team names)
-3. Use exact terminology from the source (e.g., "neonatal care team" not "NICU" unless specified)
+3. Use EXACT terminology from the source (e.g., "neonatal care team" not "NICU" unless specifically stated)
 4. Include all test results and measurements
-5. Maintain clinical accuracy while being concise
+5. Be precise about medication courses (e.g., betamethasone standard two-dose course)
+6. Include complete postpartum monitoring (fundal height, lochia, epidural discontinuation)
+7. Maintain clinical accuracy while being concise
+8. Do NOT assume or upgrade terminology (e.g., don't say "NICU" if source says "neonatal observation")
 
 Keep it complete but concise.
 <|end|>
