@@ -1,6 +1,6 @@
-# Use RunPod's base image with CUDA 12.4 for CTranslate2 compatibility
-# CTranslate2 4.5.0+ requires CUDA ≥12.3 and cuDNN 9
-FROM runpod/base:0.6.2-cuda12.4.1
+# Use NVIDIA's official CUDA image with cuDNN 9 - same as RunPod's official faster-whisper
+# This image has cuDNN 9 built-in, which CTranslate2 needs
+FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04
 
 # Remove any third-party apt sources to avoid issues with expiring keys.
 RUN rm -f /etc/apt/sources.list.d/*.list
@@ -18,14 +18,17 @@ ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 # Set working directory
 WORKDIR /app
 
-# Layer 1: System packages (rarely change)
+# Layer 1: System packages and Python (NVIDIA base doesn't include Python)
 RUN apt-get update -y && \
     apt-get install --yes --no-install-recommends \
-        ffmpeg libgl1 libx11-6 wget curl && \
+        python3.10 python3.10-dev python3.10-venv python3-pip \
+        ffmpeg libgl1 libx11-6 wget curl build-essential && \
+    ln -s /usr/bin/python3.10 /usr/bin/python && \
+    ln -s /usr/bin/python3.10 /usr/bin/python3 && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Layer 2: Python setup (RunPod base already has Python)
+# Layer 2: Python setup verification
 RUN python3 --version && pip3 --version
 
 # Upgrade pip
@@ -35,8 +38,8 @@ RUN python3 -m pip install --upgrade pip setuptools wheel
 COPY requirements.txt .
 
 # Install Python dependencies from requirements.txt
-# Install torch with CUDA 12.1 support for better compatibility with CTranslate2 4.4.0
-RUN pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
+# Install PyTorch with CUDA 12.1 support (compatible with CUDA 12.3 runtime)
+RUN pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Verify CUDA is available (RunPod base should have it configured)
