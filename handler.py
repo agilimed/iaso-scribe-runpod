@@ -10,6 +10,13 @@ import json
 import base64
 import tempfile
 import runpod
+
+# Disable HF_TRANSFER if package not available
+try:
+    import hf_transfer
+except ImportError:
+    os.environ['HF_HUB_ENABLE_HF_TRANSFER'] = '0'
+    
 from faster_whisper import WhisperModel
 from llama_cpp import Llama
 import torch
