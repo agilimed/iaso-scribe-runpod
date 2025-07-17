@@ -35,13 +35,23 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install llama-cpp-python separately with CUDA support
 RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --no-cache-dir
 
-# Copy handler
-COPY handler.py .
+# Copy handler and download script
+COPY handler.py download_models.py ./
 
 # Create models directory and check disk space
 RUN mkdir -p /models /models/whisper && \
     df -h / && \
     echo "Disk space available: $(df -h / | awk 'NR==2 {print $4}')"
+
+# Optional: Pre-download models during build (set to true for production)
+# This significantly increases image size but eliminates runtime downloads
+ARG DOWNLOAD_MODELS=false
+RUN if [ "$DOWNLOAD_MODELS" = "true" ]; then \
+        echo "Pre-downloading models..." && \
+        python3 download_models.py; \
+    else \
+        echo "Skipping model download. Models will be downloaded at runtime."; \
+    fi
 
 # Set environment variables
 ENV WHISPER_MODEL=medium
