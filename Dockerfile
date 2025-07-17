@@ -25,13 +25,7 @@ RUN apt-get update -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Layer 2: Setup cuDNN library paths for CTranslate2
-# RunPod base images include cuDNN, but we need to ensure it's accessible
-RUN ldconfig /usr/local/cuda/lib64 && \
-    echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf.d/cuda.conf && \
-    ldconfig
-
-# Layer 3: Python setup (RunPod base already has Python)
+# Layer 2: Python setup (RunPod base already has Python)
 RUN python3 --version && pip3 --version
 
 # Upgrade pip
@@ -41,8 +35,8 @@ RUN python3 -m pip install --upgrade pip setuptools wheel
 COPY requirements.txt .
 
 # Install Python dependencies from requirements.txt
-# Install torch with CUDA 12.4 support to match our base image
-RUN pip install torch --index-url https://download.pytorch.org/whl/cu124 --no-cache-dir
+# Install torch with CUDA 12.1 support for better compatibility with CTranslate2 4.4.0
+RUN pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Verify CUDA is available (RunPod base should have it configured)

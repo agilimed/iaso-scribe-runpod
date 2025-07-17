@@ -1,5 +1,6 @@
 runpod~=1.7.9
 faster-whisper==1.1.0
+ctranslate2==4.4.0  # Pin to 4.4.0 for CUDA 12 compatibility without cuDNN 9
 llama-cpp-python>=0.2.0
 # torch is installed separately with CUDA support in Dockerfile
 requests>=2.31.0
