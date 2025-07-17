@@ -119,25 +119,29 @@ def handler(job):
         # Build prompt based on type
         if prompt_type == "medical_insights":
             prompt = f"""<|system|>
-You are an expert medical documentation assistant with step-by-step reasoning capabilities. 
-IMPORTANT: Show your reasoning process in <think>...</think> tags, then provide your final medical insights in <solution>...</solution> tags.
+You are an expert medical documentation assistant. You MUST structure your response with <think> tags for reasoning and <solution> tags for the final answer.
 <|end|>
 <|user|>
-Analyze this medical transcription and provide comprehensive insights:
+Analyze this medical transcription:
 
 {text}
 
-First, show your reasoning in <think> tags, then provide your final answer in <solution> tags with:
+YOU MUST structure your response EXACTLY like this:
+
+<think>
+[Your step-by-step reasoning here]
+</think>
+
+<solution>
 1. Chief complaint and key symptoms
-2. Medical findings and observations
+2. Medical findings and observations  
 3. Relevant medications with dosages
 4. Clinical assessment and diagnosis considerations
 5. Recommended follow-up actions
 6. Any urgent concerns or red flags
-
-Use clear medical terminology.
+</solution>
 <|end|>
-<|assistant|>"""
+<|assistant|><think>"""
         elif prompt_type == "soap":
             prompt = f"""<|system|>
 You are an expert medical scribe. Convert the transcription into a properly formatted SOAP note using active voice and complete clinical details.
@@ -179,7 +183,7 @@ PLAN:
 
 Important: Use active voice, include ALL clinical details, and maintain exact terminology from the source.
 <|end|>
-<|assistant|>"""
+<|assistant|><think>"""
         elif prompt_type == "summary":
             prompt = f"""<|system|>
 You are a medical documentation specialist. Create a concise clinical summary using active voice and complete medical details.
@@ -209,7 +213,7 @@ Important guidelines:
 
 Keep it complete but concise.
 <|end|>
-<|assistant|>"""
+<|assistant|><think>"""
         else:
             # Use text as direct prompt
             prompt = text
@@ -230,6 +234,17 @@ Keep it complete but concise.
         
         generation_time = time.time() - start_time
         generated_text = response['choices'][0]['text'].strip()
+        
+        # Ensure proper tag closure for structured prompts
+        if prompt_type in ["medical_insights", "soap", "summary"]:
+            # Add the initial <think> tag if missing (since we start with it in prompt)
+            if not generated_text.startswith("<think>") and "<think>" not in generated_text:
+                generated_text = "<think>\n" + generated_text
+            # Check if we need to close tags
+            if "<think>" in generated_text and "</think>" not in generated_text:
+                generated_text += "\n</think>"
+            if "</think>" in generated_text and "<solution>" not in generated_text:
+                generated_text += "\n<solution>\n[Response was incomplete]\n</solution>"
         
         # Log performance metrics
         tokens_per_second = response['usage']['completion_tokens'] / generation_time if generation_time > 0 else 0
