@@ -1,6 +1,6 @@
-# Use RunPod's latest base image with CUDA 12.1 for better compatibility
-# This image is optimized for RunPod infrastructure and likely cached on nodes
-FROM runpod/base:0.6.1-cuda12.1.0
+# Use RunPod's base image with CUDA 12.4 for CTranslate2 compatibility
+# CTranslate2 4.5.0+ requires CUDA ≥12.3 and cuDNN 9
+FROM runpod/base:0.6.2-cuda12.4.1
 
 # Remove any third-party apt sources to avoid issues with expiring keys.
 RUN rm -f /etc/apt/sources.list.d/*.list
@@ -30,29 +30,25 @@ RUN python3 -m pip install --upgrade pip setuptools wheel
 COPY requirements.txt .
 
 # Install Python dependencies from requirements.txt
-# Install torch with CUDA support first
-RUN pip install torch --index-url https://download.pytorch.org/whl/cu121 --no-cache-dir
+# Install torch with CUDA 12.4 support to match our base image
+RUN pip install torch --index-url https://download.pytorch.org/whl/cu124 --no-cache-dir
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Verify CUDA is available (RunPod base should have it configured)
 RUN nvcc --version && python3 -c "import torch; print(f'PyTorch CUDA: {torch.cuda.is_available()}')"
 
-# Layer 4: Install llama-cpp-python with CUDA support
-# Try pre-built wheels for CUDA 12.x first
+# Layer 4: Install llama-cpp-python with CUDA 12.4 support
+# Use pre-built wheels for CUDA 12.4 to match our base image
 RUN pip install llama-cpp-python \
-    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 \
-    --force-reinstall --upgrade --no-cache-dir || \
-    (echo "Pre-built wheel failed, trying CUDA 12.4..." && \
-    pip install llama-cpp-python \
     --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124 \
-    --force-reinstall --upgrade --no-cache-dir) || \
-    (echo "All pre-built wheels failed, building from source..." && \
+    --force-reinstall --upgrade --no-cache-dir || \
+    (echo "Pre-built wheel failed, building from source..." && \
     LLAMA_CUDA=1 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python --no-cache-dir)
 
 # Copy handler and download script
 COPY handler.py download_models.py ./
 
-# Create models directory and check disk space
+# Create fallback models directory and check disk space
 RUN mkdir -p /models /models/whisper && \
     df -h / && \
     echo "Disk space available: $(df -h / | awk 'NR==2 {print $4}')"
@@ -69,7 +65,7 @@ RUN if [ "$DOWNLOAD_MODELS" = "true" ]; then \
 
 # Set environment variables
 ENV WHISPER_MODEL=medium
-ENV PHI_MODEL_PATH=/models/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf
+ENV PHI_MODEL_PATH=/runpod-volume/models/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf
 ENV PYTHONUNBUFFERED=1
 
 # Pre-download Whisper model to speed up cold starts (optional)

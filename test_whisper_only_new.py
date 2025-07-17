@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple test for RunPod endpoint
+Test just Whisper transcription without Phi-4
 """
 
 import requests
@@ -9,31 +9,29 @@ import os
 import time
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 ENDPOINT_ID = os.environ.get("RUNPOD_ENDPOINT_ID", "rntxttrdl8uv3i")
 RUNPOD_API_KEY = os.environ.get("RUNPOD_API_KEY", "your-api-key-here")
 
-def test_whisper_only():
-    """Test just Whisper without Phi-4 to isolate the issue."""
+def test_whisper_only_sync():
+    """Test just Whisper without Phi-4 insights using synchronous endpoint"""
     
     headers = {
         "Authorization": f"Bearer {RUNPOD_API_KEY}",
         "Content-Type": "application/json"
     }
     
-    # Simple test - no medical insights
+    # Use a shorter audio sample
     payload = {
         "input": {
-            "audio": "https://www2.cs.uic.edu/~i101/SoundFiles/CantinaBand60.wav",
-            "generate_insights": False  # Don't use Phi-4
+            "audio": "https://github.com/ggerganov/whisper.cpp/raw/master/samples/jfk.wav",
+            "generate_insights": False  # Disable Phi-4 to test Whisper alone
         }
     }
     
-    print("🎤 Testing Whisper transcription (no Phi-4)...")
-    print(f"Audio: {payload['input']['audio']}")
-    print(f"API Key: {RUNPOD_API_KEY[:10]}...")
+    print("🎤 Testing Whisper-only transcription...")
     print(f"Endpoint: https://api.runpod.ai/v2/{ENDPOINT_ID}/runsync")
     print("Sending request...")
     
@@ -41,7 +39,8 @@ def test_whisper_only():
     response = requests.post(
         f"https://api.runpod.ai/v2/{ENDPOINT_ID}/runsync",
         headers=headers,
-        json=payload
+        json=payload,
+        timeout=300  # 5 minute timeout
     )
     elapsed = time.time() - start
     
@@ -50,22 +49,22 @@ def test_whisper_only():
     
     if response.status_code == 200:
         result = response.json()
-        print(json.dumps(result, indent=2))
         
         if result.get("status") == "COMPLETED":
             output = result.get("output", {})
             print("\n✅ Success!")
             print(f"Transcription: {output.get('transcription', 'N/A')}")
-        elif result.get("status") == "FAILED":
-            print(f"\n❌ Failed: {result.get('error', 'Unknown error')}")
-        elif result.get("status") == "IN_PROGRESS":
-            print(f"\n⏳ Still processing... Worker: {result.get('workerId', 'unknown')}")
-            print("Note: First run downloads models, which can take 5-10 minutes")
+            print(f"Language: {output.get('language', 'N/A')}")
+            print(f"Duration: {output.get('duration', 'N/A')}s")
+            print(f"Processing time: {output.get('processing_time', {})}")
+        else:
+            print(f"\nStatus: {result.get('status')}")
+            if result.get("error"):
+                print(f"Error: {result.get('error')}")
     else:
-        print(f"\n❌ HTTP Error {response.status_code}: {response.text}")
-        print(f"Headers sent: {headers}")
+        print(f"\n❌ HTTP Error: {response.text}")
 
 if __name__ == "__main__":
-    print("🚀 Simple RunPod Test")
+    print("🚀 RunPod Whisper-Only Test")
     print("=" * 50)
-    test_whisper_only()
+    test_whisper_only_sync()

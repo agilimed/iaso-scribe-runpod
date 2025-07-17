@@ -40,13 +40,13 @@ PHI_MODEL_URL = os.environ.get(
     "PHI_MODEL_URL", 
     "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-plus-GGUF/resolve/main/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf"
 )
-# Use /workspace if available (network volume), fallback to /models
-if os.path.exists("/workspace"):
-    MODEL_BASE_PATH = "/workspace/models"
-    logger.info("Using network volume at /workspace for persistent model storage")
+# Use /runpod-volume for network volume (RunPod standard mount path)
+if os.path.exists("/runpod-volume"):
+    MODEL_BASE_PATH = "/runpod-volume/models"
+    logger.info("Using network volume at /runpod-volume for persistent model storage")
 else:
     MODEL_BASE_PATH = "/models"
-    logger.warning("Network volume not found at /workspace, using ephemeral /models directory")
+    logger.warning("Network volume not found at /runpod-volume, using ephemeral /models directory")
     logger.warning("Models will need to be re-downloaded when workers restart!")
 
 PHI_MODEL_PATH = os.environ.get("PHI_MODEL_PATH", f"{MODEL_BASE_PATH}/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf")
