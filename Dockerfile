@@ -44,14 +44,15 @@ ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 # Verify CUDA installation
 RUN nvcc --version && python3 -c "import torch; print(f'PyTorch CUDA: {torch.cuda.is_available()}')"
 
-# Install llama-cpp-python with CUDA support
-ENV LLAMA_CUDA=1
-ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=all"
-ENV FORCE_CMAKE=1
-ENV CUDA_DOCKER_ARCH=all
-
-# Install llama-cpp-python with explicit CUDA build
-RUN pip install llama-cpp-python --force-reinstall --upgrade --no-cache-dir --no-binary llama-cpp-python --verbose
+# Try pre-built wheel first, fallback to building from source
+# Install llama-cpp-python with CUDA 12.1 support (closest to 12.3)
+RUN pip install llama-cpp-python \
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 \
+    --force-reinstall --upgrade --no-cache-dir || \
+    (echo "Pre-built wheel failed, building from source..." && \
+    LLAMA_CUDA=1 CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=70;75;80;86;89;90" \
+    FORCE_CMAKE=1 CUDACXX=/usr/local/cuda-12.3/bin/nvcc \
+    pip install llama-cpp-python --force-reinstall --upgrade --no-cache-dir --verbose)
 
 # Copy handler and download script
 COPY handler.py download_models.py ./
