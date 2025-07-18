@@ -11,6 +11,9 @@ import re
 from typing import Dict, Any, List, Optional
 import logging
 import os
+import subprocess
+import tarfile
+import shutil
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +22,8 @@ logger = logging.getLogger(__name__)
 # Model configuration
 MODEL_NAME = os.environ.get("MODEL_NAME", "iasoql-7b")  # Your proprietary model
 MODEL_PATH = os.environ.get("MODEL_PATH", "/runpod-volume/models")  # RunPod network volume
-S3_MODEL_PATH = os.environ.get("S3_MODEL_PATH", "")  # S3 path to your model
+MODEL_DOWNLOAD_URL = os.environ.get("MODEL_DOWNLOAD_URL", "")  # Pre-signed URL or S3 path
+S3_MODEL_PATH = os.environ.get("S3_MODEL_PATH", "")  # S3 path (deprecated, use MODEL_DOWNLOAD_URL)
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 AWS_REGION = os.environ.get("AWS_REGION", "us-west-2")
@@ -29,10 +33,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 model = None
 tokenizer = None
 
-def download_model_from_s3():
-    """Download model from S3 if not exists locally"""
-    import boto3
-    
+def download_model_from_url():
+    """Download model from pre-signed URL or S3"""
     local_model_path = os.path.join(MODEL_PATH, MODEL_NAME)
     
     # Check if model already exists
@@ -40,9 +42,97 @@ def download_model_from_s3():
         logger.info(f"Model already exists at {local_model_path}")
         return local_model_path
     
+    # Prefer MODEL_DOWNLOAD_URL over S3_MODEL_PATH
+    download_url = MODEL_DOWNLOAD_URL or S3_MODEL_PATH
+    
+    if not download_url:
+        logger.error("MODEL_DOWNLOAD_URL not set and model not found locally")
+        raise ValueError("Model not found. Please set MODEL_DOWNLOAD_URL environment variable")
+    
+    logger.info(f"Downloading model from: {download_url[:50]}...")  # Log first 50 chars for security
+    
+    try:
+        # Create model directory
+        os.makedirs(MODEL_PATH, exist_ok=True)
+        temp_path = os.path.join(MODEL_PATH, "temp_download")
+        
+        # Check if it's a pre-signed URL (contains query parameters)
+        if "?" in download_url and "http" in download_url:
+            # It's a pre-signed URL - download directly
+            logger.info("Detected pre-signed URL, downloading with wget...")
+            
+            # Download to temp file
+            subprocess.run([
+                "wget", "-q", "--show-progress", "-O", temp_path, download_url
+            ], check=True)
+            
+            # Check if it's a tar.gz file
+            if tarfile.is_tarfile(temp_path):
+                logger.info("Extracting tar.gz archive...")
+                with tarfile.open(temp_path, 'r:gz') as tar:
+                    tar.extractall(MODEL_PATH)
+                os.remove(temp_path)
+                
+                # Find the extracted model directory
+                extracted_dirs = [d for d in os.listdir(MODEL_PATH) 
+                                if os.path.isdir(os.path.join(MODEL_PATH, d)) 
+                                and os.path.exists(os.path.join(MODEL_PATH, d, "config.json"))]
+                
+                if extracted_dirs:
+                    # Rename to expected model name
+                    extracted_path = os.path.join(MODEL_PATH, extracted_dirs[0])
+                    if extracted_path != local_model_path:
+                        shutil.move(extracted_path, local_model_path)
+                else:
+                    raise ValueError("No valid model directory found in archive")
+            else:
+                raise ValueError("Downloaded file is not a tar.gz archive")
+                
+        elif download_url.startswith("s3://"):
+            # It's an S3 path - use boto3 (fallback to original method)
+            return download_model_from_s3()
+        else:
+            # Assume it's a direct download URL
+            logger.info("Downloading from direct URL...")
+            subprocess.run([
+                "wget", "-q", "--show-progress", "-O", temp_path, download_url
+            ], check=True)
+            
+            # Extract if tar.gz
+            if tarfile.is_tarfile(temp_path):
+                logger.info("Extracting tar.gz archive...")
+                with tarfile.open(temp_path, 'r:gz') as tar:
+                    tar.extractall(MODEL_PATH)
+                os.remove(temp_path)
+                
+                # Find and rename extracted directory
+                extracted_dirs = [d for d in os.listdir(MODEL_PATH) 
+                                if os.path.isdir(os.path.join(MODEL_PATH, d)) 
+                                and os.path.exists(os.path.join(MODEL_PATH, d, "config.json"))]
+                
+                if extracted_dirs:
+                    extracted_path = os.path.join(MODEL_PATH, extracted_dirs[0])
+                    if extracted_path != local_model_path:
+                        shutil.move(extracted_path, local_model_path)
+                        
+        logger.info(f"Model downloaded successfully to {local_model_path}")
+        return local_model_path
+        
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error downloading model: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error processing model: {e}")
+        raise
+
+def download_model_from_s3():
+    """Legacy S3 download method - kept for backward compatibility"""
+    import boto3
+    
+    local_model_path = os.path.join(MODEL_PATH, MODEL_NAME)
+    
     if not S3_MODEL_PATH:
-        logger.error("S3_MODEL_PATH not set and model not found locally")
-        raise ValueError("Model not found. Please set S3_MODEL_PATH environment variable")
+        return None
     
     logger.info(f"Downloading model from S3: {S3_MODEL_PATH}")
     
@@ -117,8 +207,8 @@ def load_model():
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
     
     try:
-        # Download model from S3 if needed
-        local_model_path = download_model_from_s3()
+        # Download model if needed
+        local_model_path = download_model_from_url()
         
         # Load tokenizer
         logger.info(f"Loading tokenizer from {local_model_path}")

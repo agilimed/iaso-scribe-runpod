@@ -1,0 +1,24 @@
+# Pre-signed URLs (contain temporary credentials)
+presigned_url.txt
+
+# Model files
+model/
+*.tar.gz
+*.safetensors
+*.bin
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -47,21 +47,38 @@ When templates don't match, uses fine-tuned model for:
    ```
    MODEL_NAME=iasoql-7b
    MODEL_PATH=/runpod-volume/models
-   S3_MODEL_PATH=s3://nexuscare-ai-models/models/iasoql-merged-complete/
-   AWS_ACCESS_KEY_ID=your_access_key
-   AWS_SECRET_ACCESS_KEY=your_secret_key
-   AWS_REGION=us-west-2
+   MODEL_DOWNLOAD_URL=<pre-signed-url-here>
+   ```
+   
+   To generate the pre-signed URL:
+   ```bash
+   # From your local machine with AWS credentials:
+   cd iasoql/
+   python generate_presigned_url.py
+   
+   # This will create a tar.gz archive and generate a 24-hour pre-signed URL
+   # Copy the URL and paste it as MODEL_DOWNLOAD_URL
    ```
 
 ### Model Storage Options
 
-#### Option 1: S3 Download (Recommended)
-The handler will automatically download your proprietary IASOQL model from S3 on first run:
+#### Option 1: Pre-signed URL (Recommended)
+The handler will automatically download your proprietary IASOQL model using a pre-signed URL:
+- No AWS credentials needed in RunPod
 - Model is cached in the RunPod network volume
 - Subsequent starts use the cached model
-- Update S3_MODEL_PATH to point to your model archive
+- Generate new pre-signed URLs as needed (24-hour expiry)
 
-#### Option 2: Pre-baked Docker Image
+#### Option 2: Direct S3 Access (Requires AWS Credentials)
+Set these additional environment variables:
+```
+S3_MODEL_PATH=s3://nexuscare-ai-models/models/iasoql-merged-complete/
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_REGION=us-west-2
+```
+
+#### Option 3: Pre-baked Docker Image
 Include the model in the Docker image during build:
 1. Place model files in `iasoql/model/` directory
 2. Update Dockerfile to COPY the model
