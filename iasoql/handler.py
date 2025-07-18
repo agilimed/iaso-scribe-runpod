@@ -23,9 +23,11 @@ logger = logging.getLogger(__name__)
 from transformers import AutoModelForCausalLM, AutoTokenizer
 # Try to import Qwen2 tokenizer if available
 try:
-    from transformers import Qwen2Tokenizer
+    from transformers import Qwen2Tokenizer, Qwen2TokenizerFast
+    QWEN2_AVAILABLE = True
 except ImportError:
     logger.warning("Qwen2Tokenizer not available, will use AutoTokenizer")
+    QWEN2_AVAILABLE = False
 
 # Model configuration - Using HuggingFace like Phi-4/Whisper
 MODEL_NAME = "vivkris/iasoql-7B"  # Private HuggingFace repo
@@ -63,12 +65,32 @@ def load_model():
         
         # Load tokenizer
         logger.info(f"Loading tokenizer from {MODEL_NAME}")
-        tokenizer = AutoTokenizer.from_pretrained(
-            MODEL_NAME,
-            cache_dir=CACHE_DIR,
-            token=hf_token,  # Use 'token' instead of deprecated 'use_auth_token'
-            trust_remote_code=True
-        )
+        # Set environment variable to use the token for all HF operations
+        if hf_token:
+            os.environ["HF_TOKEN"] = hf_token
+            
+        # Try different tokenizer loading approaches
+        try:
+            if QWEN2_AVAILABLE:
+                logger.info("Trying Qwen2TokenizerFast directly...")
+                tokenizer = Qwen2TokenizerFast.from_pretrained(
+                    MODEL_NAME,
+                    cache_dir=CACHE_DIR,
+                    token=hf_token,
+                    trust_remote_code=True
+                )
+            else:
+                raise ImportError("Qwen2 not available")
+        except Exception as e:
+            logger.warning(f"Failed to load Qwen2TokenizerFast: {e}")
+            logger.info("Falling back to AutoTokenizer...")
+            tokenizer = AutoTokenizer.from_pretrained(
+                MODEL_NAME,
+                cache_dir=CACHE_DIR,
+                token=hf_token,
+                trust_remote_code=True,
+                use_fast=False  # Try slow tokenizer to avoid template issues
+            )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         
