@@ -1,0 +1,175 @@
+# Azure AKS specific values
+global:
+  cloudProvider: azure
+  domain: nexuscare-ai.example.com
+  storageClass: managed-premium
+
+# Use ACR for images
+image:
+  registry: nexuscare.azurecr.io
+
+# API Gateway with Azure Application Gateway
+apiGateway:
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-resource-group: nexuscare-rg
+      service.beta.kubernetes.io/azure-dns-label-name: nexuscare-ai
+      service.beta.kubernetes.io/azure-load-balancer-ssl-cert: nexuscare-cert
+  
+  ingress:
+    enabled: true
+    className: azure/application-gateway
+    annotations:
+      kubernetes.io/ingress.class: azure/application-gateway
+      appgw.ingress.kubernetes.io/ssl-redirect: "true"
+      appgw.ingress.kubernetes.io/use-private-ip: "false"
+      appgw.ingress.kubernetes.io/backend-protocol: "http"
+
+# Use Azure Database for PostgreSQL
+postgresql:
+  enabled: false
+  
+azurePostgres:
+  enabled: true
+  serverName: "nexuscare-db"
+  resourceGroup: "nexuscare-rg"
+  database: nexuscare
+  username: postgres@nexuscare-db
+  # Password from Azure Key Vault
+  passwordSecretName: nexuscare-postgres-password
+
+# Use Azure Cache for Redis
+redis:
+  enabled: false
+  
+azureRedis:
+  enabled: true
+  endpoint: "nexuscare-redis.redis.cache.windows.net"
+  port: 6380
+  ssl: true
+  # Access key from Azure Key Vault
+  accessKeySecretName: nexuscare-redis-key
+
+# Qdrant with Azure Blob Storage
+qdrant:
+  cloudStorage:
+    type: azure
+    container: nexuscare-qdrant
+    accountName: nexuscareStorage
+    # Account key from Azure Key Vault
+    accountKeySecretName: nexuscare-storage-key
+
+# Azure specific settings
+azure:
+  resourceGroup: nexuscare-rg
+  managedIdentity:
+    enabled: true
+    clientId: "12345678-1234-1234-1234-123456789012"
+  keyVault:
+    name: nexuscare-kv
+    tenantId: "87654321-4321-4321-4321-210987654321"
+
+# Node pools for GPU workloads
+clinicalAI:
+  nodeSelector:
+    agentpool: gpupool
+    accelerator: nvidia
+  tolerations:
+    - key: sku
+      operator: Equal
+      value: gpu
+      effect: NoSchedule
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  medcat:
+    enableGPU: true
+
+iasoql:
+  nodeSelector:
+    agentpool: gpupool
+    accelerator: nvidia
+  tolerations:
+    - key: sku
+      operator: Equal
+      value: gpu
+      effect: NoSchedule
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  model:
+    enableGPU: true
+
+embeddings:
+  nodeSelector:
+    agentpool: gpupool
+    accelerator: nvidia
+  tolerations:
+    - key: sku
+      operator: Equal
+      value: gpu  
+      effect: NoSchedule
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  model:
+    enableGPU: true
+
+# TLS with Azure Key Vault certificates
+security:
+  tls:
+    enabled: true
+    certManager:
+      enabled: true
+      issuer: letsencrypt-prod
+    azureKeyVault:
+      enabled: true
+      vaultName: nexuscare-kv
+      certificateName: nexuscare-tls
+
+# Monitoring with Azure Monitor
+monitoring:
+  enabled: true
+  azureMonitor:
+    enabled: true
+    workspaceId: "12345678-1234-1234-1234-123456789012"
+    # Workspace key from Key Vault
+    workspaceKeySecretName: nexuscare-monitor-key
+
+# Azure-specific autoscaling
+apiGateway:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: azure-monitor
+        azureMonitor:
+          metricName: Percentage CPU
+          resourceGroup: nexuscare-rg
+          resourceName: nexuscare-aks
+          target:
+            type: AverageValue
+            averageValue: "70"
+
+# Azure Policy
+azurePolicy:
+  enabled: true
+  enforcement: true
+  
+# Network policies  
+networkPolicies:
+  enabled: true
+  provider: azure
+  
+# Pod Identity
+podIdentity:
+  enabled: true
+  type: managed

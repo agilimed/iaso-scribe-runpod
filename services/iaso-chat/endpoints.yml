@@ -1,0 +1,11 @@
+action_endpoint:
+  url: "http://rasa-actions:5055/webhook"
+
+tracker_store:
+  type: redis
+  url: "redis://redis:6379"
+  db: 0
+
+models:
+  url: "http://rasa-server:5005/models"
+  wait_time_between_pulls: 10

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: iaso-chat
+  labels:
+    name: iaso-chat
+    app.kubernetes.io/name: iaso-chat
+    app.kubernetes.io/component: conversational-ai
+    app.kubernetes.io/part-of: iaso-platform
+  annotations:
+    description: "IasoChat conversational AI service namespace"

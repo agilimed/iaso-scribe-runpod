@@ -1,0 +1,243 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - hello
+    - hi
+    - hey
+    - good morning
+    - good afternoon
+    - good evening
+    - greetings
+    - hi there
+    - hello there
+    - hey there
+
+- intent: goodbye
+  examples: |
+    - goodbye
+    - bye
+    - see you later
+    - talk to you later
+    - have a good day
+    - take care
+    - farewell
+    - bye bye
+    - see you
+    - until next time
+
+- intent: affirm
+  examples: |
+    - yes
+    - yeah
+    - yep
+    - that's right
+    - correct
+    - absolutely
+    - definitely
+    - sure
+    - of course
+    - indeed
+    - affirmative
+
+- intent: deny
+  examples: |
+    - no
+    - nope
+    - not really
+    - I don't think so
+    - that's not right
+    - incorrect
+    - negative
+    - absolutely not
+    - definitely not
+    - no way
+
+- intent: ask_symptoms
+  examples: |
+    - what symptoms are you experiencing
+    - tell me about your symptoms
+    - what's wrong
+    - what's the problem
+    - how are you feeling
+    - what brings you in today
+    - describe your symptoms
+    - what's bothering you
+
+- intent: report_symptoms
+  examples: |
+    - I have a [headache](symptom)
+    - I'm feeling [nauseous](symptom)
+    - I have [chest pain](symptom)
+    - I'm experiencing [dizziness](symptom)
+    - I have a [fever](symptom)
+    - I'm having [difficulty breathing](symptom)
+    - I have [stomach pain](symptom)
+    - I'm feeling [tired](symptom)
+    - I have [back pain](symptom)
+    - I'm experiencing [joint pain](symptom)
+    - I have [cough](symptom)
+    - I'm having [sore throat](symptom)
+    - I have [rash](symptom)
+    - I'm experiencing [muscle pain](symptom)
+    - I have [vision problems](symptom)
+
+- intent: ask_pain_level
+  examples: |
+    - how bad is your pain
+    - rate your pain
+    - what's your pain level
+    - how much does it hurt
+    - on a scale of 1 to 10
+    - describe your pain intensity
+    - how severe is the pain
+
+- intent: report_pain_level
+  examples: |
+    - my pain is [5](pain_level)
+    - it's about a [7](pain_level)
+    - I'd say [3](pain_level)
+    - the pain is [8](pain_level)
+    - it's a [10](pain_level)
+    - around [4](pain_level)
+    - probably [6](pain_level)
+    - it's [9](pain_level)
+    - about [2](pain_level)
+    - I'd rate it [1](pain_level)
+
+- intent: ask_medication
+  examples: |
+    - what medications are you taking
+    - any current medications
+    - are you on any drugs
+    - do you take any pills
+    - what prescriptions do you have
+    - any medicine you're taking
+    - current drug regimen
+    - what are you taking for medication
+
+- intent: report_medication
+  examples: |
+    - I take [ibuprofen](medication)
+    - I'm on [metformin](medication)
+    - I take [lisinopril](medication)
+    - I'm taking [aspirin](medication)
+    - I use [albuterol](medication)
+    - I'm on [omeprazole](medication)
+    - I take [atorvastatin](medication)
+    - I'm taking [levothyroxine](medication)
+    - I use [insulin](medication)
+    - I take [amoxicillin](medication)
+    - I'm not taking any medications
+    - no medications
+    - nothing currently
+
+- intent: ask_allergies
+  examples: |
+    - do you have any allergies
+    - any allergic reactions
+    - allergies to medications
+    - drug allergies
+    - food allergies
+    - environmental allergies
+    - any adverse reactions
+    - allergy history
+
+- intent: report_allergies
+  examples: |
+    - I'm allergic to [penicillin](allergy)
+    - I have a [shellfish](allergy) allergy
+    - I'm allergic to [peanuts](allergy)
+    - I have [latex](allergy) allergy
+    - I'm allergic to [sulfa](allergy)
+    - I have [seasonal](allergy) allergies
+    - I'm allergic to [dust](allergy)
+    - I have [pet](allergy) allergies
+    - no allergies
+    - no known allergies
+    - none that I know of
+
+- intent: ask_medical_history
+  examples: |
+    - any medical history
+    - previous medical conditions
+    - past medical problems
+    - health history
+    - prior illnesses
+    - medical background
+    - chronic conditions
+    - past surgeries
+
+- intent: report_medical_history
+  examples: |
+    - I have [diabetes](medical_condition)
+    - I have [hypertension](medical_condition)
+    - I have [heart disease](medical_condition)
+    - I have [asthma](medical_condition)
+    - I have [arthritis](medical_condition)
+    - I have [depression](medical_condition)
+    - I have [anxiety](medical_condition)
+    - I have [high cholesterol](medical_condition)
+    - I had [surgery](medical_condition) last year
+    - I have [cancer](medical_condition)
+    - no medical history
+    - no previous conditions
+    - healthy otherwise
+
+- intent: ask_appointment
+  examples: |
+    - I need an appointment
+    - can I schedule an appointment
+    - when can I see a doctor
+    - I want to book an appointment
+    - schedule me with a doctor
+    - set up an appointment
+    - I need to see someone
+    - can I get scheduled
+
+- intent: ask_emergency
+  examples: |
+    - this is an emergency
+    - I need immediate help
+    - urgent medical attention
+    - this is serious
+    - I need emergency care
+    - life threatening
+    - critical situation
+    - emergency situation
+    - help me now
+    - I need a doctor immediately
+
+- intent: provide_patient_id
+  examples: |
+    - my patient id is [12345](patient_id)
+    - patient id [67890](patient_id)
+    - my id is [abc123](patient_id)
+    - patient number [xyz789](patient_id)
+    - id [555999](patient_id)
+    - my patient number is [123abc](patient_id)
+
+- intent: ask_help
+  examples: |
+    - can you help me
+    - I need help
+    - help me
+    - what can you do
+    - how can you help
+    - I'm not sure what to do
+    - can you assist me
+    - I need assistance
+
+- intent: out_of_scope
+  examples: |
+    - what's the weather like
+    - tell me a joke
+    - what time is it
+    - how are you
+    - what's your name
+    - who created you
+    - sing a song
+    - tell me about politics
+    - what's the news
+    - can you cook

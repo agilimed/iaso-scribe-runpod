@@ -1,0 +1,14 @@
+[runpod]
+name = "iaso-whisper"
+gpu_type = "NVIDIA A40"
+gpu_count = 1
+container_disk_in_gb = 20
+network_volume_size = 20
+
+[environment]
+MODEL_NAME = "openai/whisper-large-v3"
+CACHE_DIR = "/runpod-volume/whisper-cache"
+
+[build]
+dockerfile = "Dockerfile"
+context = "/whisper"

@@ -1,0 +1,24 @@
+fastapi==0.115.12
+uvicorn==0.34.2
+python-dotenv==1.1.0
+httpx==0.28.1
+pydantic==2.11.4
+# asyncio is built-in for Python 3.11
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+sqlalchemy==2.0.41
+numpy
+pandas
+torch
+transformers
+scikit-learn
+grpcio>=1.60.0
+grpcio-tools>=1.60.0
+protobuf>=4.0.0
+qdrant-client==1.12.2
+redis==5.2.1
+typing-extensions==4.13.2
+python-multipart==0.0.20
+aiofiles==24.1.0
+prometheus-client==0.21.2
+pyyaml==6.0.2

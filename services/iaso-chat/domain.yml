@@ -1,0 +1,196 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - ask_symptoms
+  - report_symptoms
+  - ask_pain_level
+  - report_pain_level
+  - ask_medication
+  - report_medication
+  - ask_allergies
+  - report_allergies
+  - ask_medical_history
+  - report_medical_history
+  - ask_appointment
+  - schedule_appointment
+  - ask_test_results
+  - report_test_results
+  - ask_emergency
+  - report_emergency
+  - ask_prescription
+  - request_prescription
+  - ask_doctor_note
+  - provide_patient_id
+  - confirm_identity
+  - ask_help
+  - out_of_scope
+
+entities:
+  - patient_id
+  - phone_number
+  - symptom
+  - pain_level
+  - medication
+  - allergy
+  - medical_condition
+  - appointment_type
+  - date
+  - time
+  - doctor_name
+  - test_type
+  - prescription_name
+  - dosage
+  - frequency
+
+slots:
+  patient_id:
+    type: text
+    influence_conversation: true
+  phone_number:
+    type: text
+    influence_conversation: false
+  authenticated:
+    type: bool
+    influence_conversation: true
+  symptoms:
+    type: list
+    influence_conversation: true
+  pain_level:
+    type: categorical
+    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    influence_conversation: true
+  medications:
+    type: list
+    influence_conversation: true
+  allergies:
+    type: list
+    influence_conversation: true
+  medical_history:
+    type: list
+    influence_conversation: true
+  appointment_requested:
+    type: bool
+    influence_conversation: true
+  emergency_level:
+    type: categorical
+    values: [low, medium, high, critical]
+    influence_conversation: true
+  conversation_stage:
+    type: categorical
+    values: [greeting, assessment, information_gathering, recommendation, closing]
+    influence_conversation: true
+  clinical_context:
+    type: any
+    influence_conversation: true
+
+responses:
+  utter_greet:
+    - text: "Hello! I'm your IASO health assistant. How can I help you today?"
+      custom:
+        voice_emotion: "friendly"
+    - text: "Hi there! I'm here to help with your health concerns. What brings you in today?"
+      custom:
+        voice_emotion: "friendly"
+
+  utter_goodbye:
+    - text: "Thank you for using IASO health services. Take care and feel better soon!"
+      custom:
+        voice_emotion: "friendly"
+    - text: "Goodbye! Remember to follow up with your healthcare provider if needed."
+      custom:
+        voice_emotion: "professional"
+
+  utter_ask_patient_id:
+    - text: "For your security, could you please provide your patient ID?"
+      custom:
+        voice_emotion: "professional"
+
+  utter_authentication_failed:
+    - text: "I'm sorry, I couldn't verify your identity. Please contact your healthcare provider for assistance."
+      custom:
+        voice_emotion: "empathetic"
+
+  utter_ask_symptoms:
+    - text: "Can you tell me what symptoms you're experiencing?"
+      custom:
+        voice_emotion: "empathetic"
+    - text: "What brings you in today? Please describe your symptoms."
+      custom:
+        voice_emotion: "empathetic"
+
+  utter_ask_pain_level:
+    - text: "On a scale of 1 to 10, with 10 being the worst pain imaginable, how would you rate your pain?"
+      custom:
+        voice_emotion: "empathetic"
+
+  utter_ask_medication:
+    - text: "Are you currently taking any medications?"
+      custom:
+        voice_emotion: "professional"
+
+  utter_ask_allergies:
+    - text: "Do you have any known allergies to medications or other substances?"
+      custom:
+        voice_emotion: "professional"
+
+  utter_ask_medical_history:
+    - text: "Do you have any significant medical history I should be aware of?"
+      custom:
+        voice_emotion: "professional"
+
+  utter_emergency_detected:
+    - text: "I understand this is urgent. Let me connect you with emergency services immediately."
+      custom:
+        voice_emotion: "urgent"
+
+  utter_schedule_appointment:
+    - text: "I can help you schedule an appointment. What type of appointment would you like?"
+      custom:
+        voice_emotion: "professional"
+
+  utter_need_clinical_data:
+    - text: "Let me check your medical records to provide better assistance."
+      custom:
+        voice_emotion: "professional"
+        needs_clinical_data: true
+
+  utter_ask_rephrase:
+    - text: "I'm sorry, I didn't understand that. Could you please rephrase your question?"
+      custom:
+        voice_emotion: "empathetic"
+
+  utter_out_of_scope:
+    - text: "I'm a health assistant and can help with medical concerns. For other questions, please contact your healthcare provider."
+      custom:
+        voice_emotion: "professional"
+
+  utter_provide_summary:
+    - text: "Let me summarize what we've discussed today."
+      custom:
+        voice_emotion: "professional"
+
+actions:
+  - action_authenticate_patient
+  - action_collect_symptoms
+  - action_assess_emergency
+  - action_get_clinical_context
+  - action_generate_recommendation
+  - action_schedule_appointment
+  - action_create_soap_note
+  - action_escalate_to_human
+
+forms:
+  symptom_assessment_form:
+    required_slots:
+      - symptoms
+      - pain_level
+      - medications
+      - allergies
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

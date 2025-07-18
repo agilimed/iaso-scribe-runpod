@@ -1,0 +1,1 @@
+# Shared module for clinical-ai services

@@ -1,0 +1,161 @@
+# GKE specific values
+global:
+  cloudProvider: gke
+  domain: nexuscare-ai.example.com
+  storageClass: standard-rwo
+
+# Use GCR for images
+image:
+  registry: gcr.io/nexuscare-project
+
+# API Gateway with GKE Ingress
+apiGateway:
+  service:
+    type: NodePort  # Required for GKE Ingress
+  
+  ingress:
+    enabled: true
+    className: gce
+    annotations:
+      kubernetes.io/ingress.class: gce
+      kubernetes.io/ingress.global-static-ip-name: nexuscare-ai-ip
+      networking.gke.io/managed-certificates: nexuscare-ai-cert
+      kubernetes.io/ingress.allow-http: "false"
+    hosts:
+      - host: api.nexuscare-ai.example.com
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+
+# Use Cloud SQL instead of in-cluster PostgreSQL
+postgresql:
+  enabled: false
+  
+cloudSQL:
+  enabled: true
+  connectionName: "nexuscare-project:us-central1:nexuscare-db"
+  database: nexuscare
+  username: postgres
+  # Password from Google Secret Manager
+  passwordSecretName: nexuscare-cloudsql-password
+
+# Use Memorystore instead of in-cluster Redis
+redis:
+  enabled: false
+  
+memorystore:
+  enabled: true
+  endpoint: "10.0.0.3"
+  port: 6379
+
+# Qdrant with GCS storage
+qdrant:
+  cloudStorage:
+    type: gcs
+    bucket: nexuscare-qdrant-storage
+    prefix: qdrant-data
+
+# Enable Workload Identity
+gke:
+  workloadIdentity:
+    enabled: true
+    serviceAccount: "nexuscare-ai@nexuscare-project.iam.gserviceaccount.com"
+  autopilot:
+    enabled: false  # Set to true for GKE Autopilot
+
+# Node pools for GPU workloads
+clinicalAI:
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-tesla-t4
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  medcat:
+    enableGPU: true
+
+iasoql:
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-tesla-t4
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  model:
+    enableGPU: true
+
+embeddings:
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-tesla-t4
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  model:
+    enableGPU: true
+
+# Google Managed Certificate
+security:
+  tls:
+    enabled: true
+    managedCertificate:
+      enabled: true
+      domains:
+        - api.nexuscare-ai.example.com
+
+# Monitoring with Google Cloud Monitoring
+monitoring:
+  enabled: true
+  stackdriver:
+    enabled: true
+    projectId: nexuscare-project
+    clusterName: nexuscare-ai-cluster
+    location: us-central1
+
+# GKE-specific autoscaling
+apiGateway:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: External
+        external:
+          metric:
+            name: loadbalancing.googleapis.com|https|request_rate
+            selector:
+              matchLabels:
+                resource.type: "https_lb_rule"
+          target:
+            type: AverageValue
+            averageValue: "100"
+
+# Enable Binary Authorization
+binaryAuthorization:
+  enabled: true
+  attestorName: "nexuscare-attestor"
+  
+# Network policies  
+networkPolicies:
+  enabled: true
+  
+# Pod Security Standards
+podSecurityStandards:
+  enforce: restricted
+  audit: restricted
+  warn: restricted

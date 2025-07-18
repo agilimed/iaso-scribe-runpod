@@ -1,0 +1,49 @@
+# RunPod specific requirements for IasoScribe
+# Includes Whisper + Phi-4 dependencies
+
+# Core ML frameworks
+torch==2.1.0+cu118
+torchaudio==2.1.0+cu118
+torchvision==0.16.0+cu118
+--index-url https://download.pytorch.org/whl/cu118
+
+# Whisper dependencies
+faster-whisper==1.0.3
+ctranslate2==3.24.0
+tokenizers==0.15.0
+
+# Phi-4 and LLM dependencies
+transformers==4.36.2
+accelerate==0.25.0
+safetensors==0.4.1
+bitsandbytes==0.41.3
+sentencepiece==0.1.99
+
+# GGUF support for quantized models
+llama-cpp-python==0.2.90
+huggingface-hub==0.24.5
+
+# Audio processing
+numpy==1.24.3
+scipy==1.11.1
+librosa==0.10.1
+soundfile==0.12.1
+pydub==0.25.1
+webrtcvad==2.0.10
+
+# RunPod specific
+runpod==1.6.2
+
+# API and async
+httpx==0.25.2
+fastapi==0.104.1
+pydantic==2.5.0
+
+# Utilities
+python-dotenv==1.0.0
+tenacity==8.2.3
+cachetools==5.3.2
+
+# Monitoring
+prometheus-client==0.19.0
+python-json-logger==2.0.7

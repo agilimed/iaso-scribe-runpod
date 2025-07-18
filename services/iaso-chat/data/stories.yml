@@ -1,0 +1,142 @@
+version: "3.1"
+
+stories:
+- story: basic greeting and symptom assessment
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_symptoms
+  - action: utter_ask_symptoms
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+  - action: utter_ask_pain_level
+  - intent: report_pain_level
+  - slot_was_set:
+    - pain_level: "5"
+  - action: utter_ask_medication
+  - intent: report_medication
+  - action: utter_ask_allergies
+  - intent: report_allergies
+  - action: action_assess_emergency
+  - action: action_generate_recommendation
+  - action: utter_goodbye
+
+- story: emergency situation
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_emergency
+  - action: action_assess_emergency
+  - action: utter_emergency_detected
+  - action: action_escalate_to_human
+
+- story: high pain level escalation
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+  - action: utter_ask_pain_level
+  - intent: report_pain_level
+  - slot_was_set:
+    - pain_level: "9"
+  - action: action_assess_emergency
+  - action: utter_emergency_detected
+  - action: action_escalate_to_human
+
+- story: patient authentication flow
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - action: utter_ask_patient_id
+  - intent: provide_patient_id
+  - action: action_authenticate_patient
+  - slot_was_set:
+    - authenticated: true
+  - action: utter_ask_symptoms
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+
+- story: authentication failure
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - action: utter_ask_patient_id
+  - intent: provide_patient_id
+  - action: action_authenticate_patient
+  - slot_was_set:
+    - authenticated: false
+  - action: utter_authentication_failed
+  - action: action_escalate_to_human
+
+- story: appointment scheduling
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_appointment
+  - action: utter_schedule_appointment
+  - action: action_schedule_appointment
+  - action: utter_goodbye
+
+- story: need clinical context
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+  - action: utter_need_clinical_data
+  - action: action_get_clinical_context
+  - action: action_generate_recommendation
+  - action: utter_goodbye
+
+- story: complete assessment with SOAP note
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+  - action: utter_ask_pain_level
+  - intent: report_pain_level
+  - action: utter_ask_medication
+  - intent: report_medication
+  - action: utter_ask_allergies
+  - intent: report_allergies
+  - action: utter_ask_medical_history
+  - intent: report_medical_history
+  - action: action_generate_recommendation
+  - action: action_create_soap_note
+  - action: utter_provide_summary
+  - action: utter_goodbye
+
+- story: out of scope handling
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: out_of_scope
+  - action: utter_out_of_scope
+  - action: utter_ask_rephrase
+
+- story: denial and clarification
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - action: utter_ask_symptoms
+  - intent: deny
+  - action: utter_ask_rephrase
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+
+- story: help request
+  steps:
+  - intent: ask_help
+  - action: utter_greet
+  - action: utter_ask_symptoms
+  - intent: report_symptoms
+  - action: action_collect_symptoms
+
+- story: goodbye early
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: goodbye
+  - action: utter_goodbye

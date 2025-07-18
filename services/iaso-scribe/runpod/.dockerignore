@@ -1,0 +1,11 @@
+*.pyc
+__pycache__
+.git
+.gitignore
+README.md
+deploy.sh
+test_request.json
+*.log
+.env
+.venv
+venv/

@@ -1,0 +1,15 @@
+[runpod]
+name = "iaso-iasoql"
+gpu_type = "NVIDIA A40"
+gpu_count = 1
+container_disk_in_gb = 30
+network_volume_size = 30
+
+[environment]
+MODEL_NAME = "vivkris/iasoql-7B"
+HF_TOKEN = "${HF_TOKEN}"
+CACHE_DIR = "/runpod-volume/iasoql-cache"
+
+[build]
+dockerfile = "Dockerfile"
+context = "/iasoql"

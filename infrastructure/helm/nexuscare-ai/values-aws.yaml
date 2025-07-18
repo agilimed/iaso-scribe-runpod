@@ -1,0 +1,125 @@
+# AWS EKS specific values
+global:
+  cloudProvider: aws
+  domain: nexuscare-ai.example.com
+  storageClass: gp3
+
+# Use ECR for images
+image:
+  registry: 123456789012.dkr.ecr.us-east-1.amazonaws.com
+
+# API Gateway with ALB
+apiGateway:
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "alb"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+      service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:123456789012:certificate/xxx"
+      service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+  
+  ingress:
+    enabled: true
+    className: alb
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:123456789012:certificate/xxx"
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+
+# Use RDS instead of in-cluster PostgreSQL
+postgresql:
+  enabled: false
+  
+rds:
+  enabled: true
+  endpoint: "nexuscare-db.cluster-xxx.us-east-1.rds.amazonaws.com"
+  port: 5432
+  database: nexuscare
+  username: postgres
+  # Password should be stored in AWS Secrets Manager
+  passwordSecretName: nexuscare-rds-password
+
+# Use ElastiCache instead of in-cluster Redis
+redis:
+  enabled: false
+  
+elasticache:
+  enabled: true
+  endpoint: "nexuscare-redis.xxx.cache.amazonaws.com"
+  port: 6379
+  # Auth token from AWS Secrets Manager
+  authSecretName: nexuscare-elasticache-auth
+
+# Qdrant with S3 storage
+qdrant:
+  cloudStorage:
+    type: s3
+    bucket: nexuscare-qdrant-storage
+    region: us-east-1
+  
+# Enable IAM roles for service accounts
+aws:
+  region: us-east-1
+  eksServiceAccount:
+    create: true
+    name: nexuscare-ai
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/NexusCareAIServiceRole"
+
+# Clinical AI with GPU instances
+clinicalAI:
+  nodeSelector:
+    node.kubernetes.io/instance-type: g4dn.xlarge
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  medcat:
+    enableGPU: true
+
+# IasoQL with GPU
+iasoql:
+  nodeSelector:
+    node.kubernetes.io/instance-type: g4dn.2xlarge
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  model:
+    enableGPU: true
+
+# Embeddings with GPU
+embeddings:
+  nodeSelector:
+    node.kubernetes.io/instance-type: g4dn.xlarge
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  model:
+    enableGPU: true
+
+# Monitoring with CloudWatch
+monitoring:
+  enabled: true
+  cloudwatch:
+    enabled: true
+    namespace: nexuscare-ai
+    
+# Autoscaling
+apiGateway:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    
+clinicalAI:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70

@@ -1,0 +1,52 @@
+# Example Terraform Variables for Development Environment
+# Copy this file to terraform.tfvars and update with your values
+
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Existing EKS Cluster
+eks_cluster_name = "your-eks-cluster-name"
+
+# Existing RDS Configuration
+rds_instance_identifier = "your-rds-instance-id"
+database_name          = "nexus_dev_db"
+database_username      = "nexus_admin"
+database_password      = "your-database-password"  # Store in environment variable: TF_VAR_database_password
+
+# Existing Redis Configuration
+redis_cluster_id = "your-redis-cluster-id"
+redis_password   = ""  # If Redis auth is enabled
+
+# Network Configuration
+vpc_id = "vpc-xxxxxxxxx"
+private_subnet_ids = [
+  "subnet-xxxxxxxxx",
+  "subnet-yyyyyyyyy",
+  "subnet-zzzzzzzzz"
+]
+
+# Kubernetes Configuration
+kubernetes_namespace = "iaso-dev"
+create_namespace    = true
+
+# Container Registry (leave empty to use default ghcr.io)
+ecr_repository_url = ""  # e.g., "123456789012.dkr.ecr.us-east-1.amazonaws.com/iaso"
+image_tag          = "latest"
+
+# Storage Configuration
+storage_class = "gp3"  # or "gp2" for older EKS clusters
+
+# Feature Flags
+enable_infrastructure_ai = true
+enable_monitoring       = false  # Set to true to deploy Prometheus/Grafana
+enable_ingress         = true
+
+# Domain Configuration (optional)
+domain_name = ""  # e.g., "iaso-dev.example.com"
+
+# Tags
+tags = {
+  Team        = "AI"
+  CostCenter  = "Development"
+  Project     = "IASO"
+}

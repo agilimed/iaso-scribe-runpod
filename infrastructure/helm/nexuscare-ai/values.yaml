@@ -1,0 +1,405 @@
+# Default values for nexuscare-ai
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  # Cloud provider: local, aws, gke, azure
+  cloudProvider: local
+  
+  # Image pull secrets
+  imagePullSecrets: []
+  
+  # Storage class
+  storageClass: ""
+  
+  # Domain for ingress
+  domain: nexuscare.local
+  
+  # Environment: dev, staging, production
+  environment: dev
+
+# Common labels to apply to all resources
+commonLabels:
+  app.kubernetes.io/part-of: nexuscare-ai
+  app.kubernetes.io/managed-by: helm
+
+# Image settings
+image:
+  registry: ""  # Leave empty for Docker Hub
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Security settings
+security:
+  # Enable authentication
+  enableAuth: true
+  
+  # JWT settings
+  jwtSecret: "change-me-in-production"
+  
+  # API keys
+  apiKeys: {}
+  
+  # TLS
+  tls:
+    enabled: false
+    certManager:
+      enabled: false
+      issuer: letsencrypt-staging
+
+# API Gateway
+apiGateway:
+  enabled: true
+  name: api-gateway
+  replicaCount: 2
+  
+  image:
+    repository: nexuscare/api-gateway
+    tag: ""  # Defaults to global tag
+  
+  service:
+    type: ClusterIP
+    port: 8080
+    
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    hosts:
+      - host: api.nexuscare.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  
+  env:
+    ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8080"
+    RATE_LIMIT: "1000/hour"
+
+# Clinical AI Service
+clinicalAI:
+  enabled: true
+  name: clinical-ai
+  replicaCount: 2
+  
+  image:
+    repository: nexuscare/clinical-ai
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8002
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  
+  # MedCAT model settings
+  medcat:
+    modelPath: /models/medcat
+    enableGPU: false
+  
+  persistence:
+    enabled: true
+    size: 10Gi
+    mountPath: /models
+    accessMode: ReadWriteOnce
+
+# Terminology Service  
+terminology:
+  enabled: true
+  name: terminology
+  replicaCount: 2
+  
+  image:
+    repository: nexuscare/terminology
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8001
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  # MeiliSearch connection
+  meilisearch:
+    host: meilisearch
+    port: 7700
+    masterKey: "change-me"
+
+# Knowledge Service
+knowledge:
+  enabled: true
+  name: knowledge
+  replicaCount: 2
+  
+  image:
+    repository: nexuscare/knowledge
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8004
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Template Service
+template:
+  enabled: true
+  name: template
+  replicaCount: 1
+  
+  image:
+    repository: nexuscare/template
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8003
+  
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# SLM Service
+slm:
+  enabled: true
+  name: slm
+  replicaCount: 1
+  
+  image:
+    repository: nexuscare/slm
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8007
+  
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  
+  # RunPod configuration
+  runpod:
+    apiKey: ""
+    endpointId: ""
+
+# IasoQL Service
+iasoql:
+  enabled: true
+  name: iasoql
+  replicaCount: 2
+  
+  image:
+    repository: nexuscare/iasoql
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8008
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+  
+  # Model settings
+  model:
+    path: /models/iasoql
+    enableGPU: false
+  
+  persistence:
+    enabled: true
+    size: 20Gi
+    mountPath: /models
+    accessMode: ReadWriteOnce
+
+# Embeddings Service
+embeddings:
+  enabled: true
+  name: embeddings
+  replicaCount: 2
+  
+  image:
+    repository: nexuscare/embeddings
+    tag: ""
+  
+  service:
+    type: ClusterIP
+    port: 8050
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  
+  # BGE-M3 model settings
+  model:
+    name: "BAAI/bge-m3"
+    enableGPU: false
+
+# Database settings
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "postgres"
+    database: "nexuscare"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+  
+  # Cloud-specific settings
+  cloudSQL:
+    enabled: false
+    connectionName: ""
+    
+  rds:
+    enabled: false
+    endpoint: ""
+    
+  azurePostgres:
+    enabled: false
+    serverName: ""
+
+# Redis settings
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "redis-password"
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+  
+  # Cloud-specific settings
+  elasticache:
+    enabled: false
+    endpoint: ""
+    
+  memorystore:
+    enabled: false
+    endpoint: ""
+    
+  azureRedis:
+    enabled: false
+    endpoint: ""
+
+# Qdrant settings
+qdrant:
+  enabled: true
+  replicaCount: 1
+  
+  persistence:
+    enabled: true
+    size: 50Gi
+  
+  config:
+    cluster:
+      enabled: false
+  
+  # Cloud-specific storage
+  cloudStorage:
+    type: ""  # s3, gcs, azure
+    bucket: ""
+    prefix: "qdrant"
+
+# MeiliSearch settings
+meilisearch:
+  enabled: true
+  environment:
+    MEILI_MASTER_KEY: "change-me-in-production"
+  persistence:
+    enabled: true
+    size: 10Gi
+
+# Monitoring
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+  grafana:
+    enabled: false
+  
+# AWS-specific settings
+aws:
+  region: us-east-1
+  eksServiceAccount:
+    create: false
+    name: nexuscare-ai
+    annotations: {}
+  
+# GKE-specific settings
+gke:
+  workloadIdentity:
+    enabled: false
+    serviceAccount: ""
+  autopilot:
+    enabled: false
+  
+# Azure-specific settings  
+azure:
+  resourceGroup: ""
+  managedIdentity:
+    enabled: false
+    clientId: ""
+  
+# Service mesh
+serviceMesh:
+  enabled: false
+  provider: istio  # istio, linkerd
+  
+# Network policies
+networkPolicies:
+  enabled: false
+  
+# Pod security policies
+podSecurityPolicies:
+  enabled: false
