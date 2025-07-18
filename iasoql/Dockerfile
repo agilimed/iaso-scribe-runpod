@@ -26,8 +26,10 @@ RUN pip install --no-cache-dir \
     bitsandbytes==0.41.3 \
     tiktoken
 
-# Copy handler from iasoql subdirectory (relative to repo root)
-COPY iasoql/handler.py /handler.py
+# Copy handler - try both paths for RunPod compatibility
+# If build context is set to /iasoql, use relative path
+# If build context is root, use subdirectory path
+COPY handler.py /handler.py
 
 # Verify correct handler was copied
 RUN echo "=== VERIFYING IASOQL HANDLER ===" && head -n 20 /handler.py && echo "=== END VERIFICATION ==="
