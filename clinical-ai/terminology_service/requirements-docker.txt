@@ -1,4 +1,0 @@
-fastapi>=0.95.0
-uvicorn[standard]>=0.20.0
-python-dotenv>=1.0.0
-meilisearch>=0.26.0 # Or the latest compatible version

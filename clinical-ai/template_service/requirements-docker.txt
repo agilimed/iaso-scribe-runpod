@@ -1,8 +1,0 @@
-fastapi>=0.95.0
-uvicorn[standard]>=0.20.0
-python-dotenv>=1.0.0
-pydantic>=1.10.0
-# For interacting with Postgres
-psycopg2-binary>=2.9.0
-SQLAlchemy>=1.4.0 # Or your preferred ORM/DB interaction library
-asyncpg>=0.25.0 # Recommended async driver for FastAPI + SQLAlchemy + Postgres
