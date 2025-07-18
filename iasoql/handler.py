@@ -5,7 +5,6 @@ Optimized for ClickHouse queries on FHIR data
 
 import runpod
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import json
 import re
 from typing import Dict, Any, List, Optional
@@ -15,6 +14,13 @@ import os
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+# Try to import Qwen2 tokenizer if available
+try:
+    from transformers import Qwen2Tokenizer
+except ImportError:
+    logger.warning("Qwen2Tokenizer not available, will use AutoTokenizer")
 
 # Model configuration - Using HuggingFace like Phi-4/Whisper
 MODEL_NAME = "vivkris/iasoql-7B"  # Private HuggingFace repo
@@ -42,7 +48,8 @@ def load_model():
         tokenizer = AutoTokenizer.from_pretrained(
             MODEL_NAME,
             cache_dir=CACHE_DIR,
-            use_auth_token=hf_token
+            use_auth_token=hf_token,
+            trust_remote_code=True
         )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
