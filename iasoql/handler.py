@@ -163,7 +163,8 @@ def handler(event):
         
         # Extract inputs
         inputs = event.get("input", {})
-        query = inputs.get("query")
+        # Support both "query" and "text" for compatibility
+        query = inputs.get("query") or inputs.get("text")
         schema_context = inputs.get("schema_context", "")
         rag_context = inputs.get("rag_context", "")
         examples = inputs.get("examples", [])
