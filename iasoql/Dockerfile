@@ -15,7 +15,7 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir \
     runpod==1.6.2 \
     torch==2.1.0 \
-    transformers==4.44.0 \
+    transformers==4.52.3 \
     accelerate==0.25.0 \
     sentencepiece==0.1.99 \
     protobuf==3.20.3 \
