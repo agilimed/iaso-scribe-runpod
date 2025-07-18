@@ -1,4 +1,5 @@
 # IASOQL RunPod Docker Image
+# Build: 2025-07-18-v2 - Fixed handler isolation
 FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
 
 # Set working directory

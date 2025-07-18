@@ -35,6 +35,9 @@ def load_model():
     """Load IASOQL model from HuggingFace"""
     global model, tokenizer
     
+    logger.info("="*60)
+    logger.info("IASOQL Handler Starting - Healthcare SQL Generation")
+    logger.info("="*60)
     logger.info(f"Loading model: {MODEL_NAME}")
     logger.info(f"Device: {DEVICE}")
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
@@ -162,6 +165,8 @@ def extract_sql_from_response(response: str) -> str:
 
 def handler(event):
     """RunPod handler function"""
+    
+    logger.info("IASOQL handler called - Processing healthcare SQL query")
     
     try:
         # Load model if not already loaded
