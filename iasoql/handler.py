@@ -32,11 +32,11 @@ tokenizer = None
 def download_model_from_s3():
     """Download model from S3 if not exists locally"""
     import boto3
-    import tarfile
     
     local_model_path = os.path.join(MODEL_PATH, MODEL_NAME)
     
-    if os.path.exists(local_model_path):
+    # Check if model already exists
+    if os.path.exists(local_model_path) and os.path.exists(os.path.join(local_model_path, "config.json")):
         logger.info(f"Model already exists at {local_model_path}")
         return local_model_path
     
@@ -47,7 +47,7 @@ def download_model_from_s3():
     logger.info(f"Downloading model from S3: {S3_MODEL_PATH}")
     
     try:
-        # Create S3 client
+        # Create S3 client with credentials (required since bucket is not public)
         if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
             s3 = boto3.client(
                 's3',
@@ -65,25 +65,43 @@ def download_model_from_s3():
         else:
             s3_path = S3_MODEL_PATH
         
-        bucket_name, key = s3_path.split("/", 1)
+        # For directory-style model path
+        if s3_path.endswith("/"):
+            s3_path = s3_path[:-1]
+        
+        bucket_name, prefix = s3_path.split("/", 1)
         
         # Create model directory
-        os.makedirs(MODEL_PATH, exist_ok=True)
+        os.makedirs(local_model_path, exist_ok=True)
         
-        # Download model files
-        download_path = os.path.join(MODEL_PATH, "iasoql-model.tar.gz")
-        logger.info(f"Downloading from bucket: {bucket_name}, key: {key}")
+        # List all files in the model directory
+        logger.info(f"Listing files in bucket: {bucket_name}, prefix: {prefix}/")
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=bucket_name, Prefix=f"{prefix}/")
         
-        s3.download_file(bucket_name, key, download_path)
+        # Download each file
+        files_downloaded = 0
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    key = obj['Key']
+                    # Skip directories
+                    if key.endswith('/'):
+                        continue
+                    
+                    # Get relative path
+                    relative_path = key[len(prefix)+1:]  # Remove prefix and slash
+                    local_file_path = os.path.join(local_model_path, relative_path)
+                    
+                    # Create subdirectories if needed
+                    os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+                    
+                    # Download file
+                    logger.info(f"Downloading {relative_path}...")
+                    s3.download_file(bucket_name, key, local_file_path)
+                    files_downloaded += 1
         
-        # Extract if it's a tar file
-        if download_path.endswith('.tar.gz'):
-            logger.info("Extracting model files...")
-            with tarfile.open(download_path, 'r:gz') as tar:
-                tar.extractall(MODEL_PATH)
-            os.remove(download_path)
-        
-        logger.info("Model downloaded and extracted successfully")
+        logger.info(f"Downloaded {files_downloaded} files successfully")
         return local_model_path
         
     except Exception as e:

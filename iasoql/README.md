@@ -47,7 +47,7 @@ When templates don't match, uses fine-tuned model for:
    ```
    MODEL_NAME=iasoql-7b
    MODEL_PATH=/runpod-volume/models
-   S3_MODEL_PATH=s3://your-bucket/path/to/iasoql-model.tar.gz
+   S3_MODEL_PATH=s3://nexuscare-ai-models/models/iasoql-merged-complete/
    AWS_ACCESS_KEY_ID=your_access_key
    AWS_SECRET_ACCESS_KEY=your_secret_key
    AWS_REGION=us-west-2
