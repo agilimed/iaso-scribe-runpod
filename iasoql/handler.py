@@ -18,8 +18,13 @@ logger = logging.getLogger(__name__)
 
 # Model configuration
 MODEL_NAME = os.environ.get("MODEL_NAME", "codellama/CodeLlama-7b-Instruct-hf")  # Default to CodeLlama if IASOQL not available
-MODEL_PATH = os.environ.get("MODEL_PATH", "/models")
+MODEL_PATH = os.environ.get("MODEL_PATH", "/runpod-volume/models")  # RunPod network volume
+HF_HOME = os.environ.get("HF_HOME", "/runpod-volume/huggingface")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Set HuggingFace cache directory
+os.environ["HF_HOME"] = HF_HOME
+os.environ["TRANSFORMERS_CACHE"] = os.path.join(HF_HOME, "transformers")
 
 # Global model instance
 model = None

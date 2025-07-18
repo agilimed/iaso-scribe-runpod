@@ -28,6 +28,16 @@ COPY handler.py /handler.py
 ENV PYTHONUNBUFFERED=1
 ENV MODEL_NAME=codellama/CodeLlama-7b-Instruct-hf
 ENV MODEL_PATH=/models
+ENV HF_HOME=/models/huggingface
+
+# Pre-download the model during build (optional - increases image size)
+# RUN python -c "from transformers import AutoModelForCausalLM, AutoTokenizer; \
+#     print('Downloading model...'); \
+#     AutoTokenizer.from_pretrained('${MODEL_NAME}'); \
+#     AutoModelForCausalLM.from_pretrained('${MODEL_NAME}', \
+#         torch_dtype='auto', \
+#         low_cpu_mem_usage=True); \
+#     print('Model downloaded successfully')"
 
 # Start handler
 CMD ["python", "-u", "/handler.py"]
