@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rasa-models-pvc
+  namespace: iasovoice
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard  # Adjust based on your cluster
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rasa-server
+  namespace: iasovoice
+  labels:
+    app: rasa-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rasa-server
+  template:
+    metadata:
+      labels:
+        app: rasa-server
+    spec:
+      containers:
+      - name: rasa
+        image: rasa/rasa:3.6.0-full  # Latest stable version
+        command: ["rasa"]
+        args: 
+          - "run"
+          - "--enable-api"
+          - "--cors"
+          - "*"
+          - "--port"
+          - "5005"
+          - "--log-level"
+          - "INFO"
+        ports:
+        - containerPort: 5005
+          name: http
+        env:
+        - name: RASA_TELEMETRY_ENABLED
+          value: "false"
+        - name: RASA_X_ENABLED
+          value: "false"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: redis-password
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+        volumeMounts:
+        - name: models
+          mountPath: /app/models
+        - name: config
+          mountPath: /app
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5005
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: 5005
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+      initContainers:
+      - name: download-model
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+          - |
+            # Check if model exists, if not create a simple one
+            if [ ! -f /app/models/model.tar.gz ]; then
+              echo "No model found, creating placeholder..."
+              mkdir -p /app/models
+              echo "placeholder" > /app/models/placeholder.txt
+            fi
+        volumeMounts:
+        - name: models
+          mountPath: /app/models
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: rasa-models-pvc
+      - name: config
+        configMap:
+          name: rasa-config
+          items:
+          - key: config.yml
+            path: config.yml
+          - key: endpoints.yml
+            path: endpoints.yml
+          - key: credentials.yml
+            path: credentials.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rasa-server
+  namespace: iasovoice
+  labels:
+    app: rasa-server
+spec:
+  selector:
+    app: rasa-server
+  ports:
+  - port: 5005
+    targetPort: 5005
+    name: http
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rasa-server-hpa
+  namespace: iasovoice
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rasa-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

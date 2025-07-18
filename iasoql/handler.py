@@ -17,18 +17,78 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Model configuration
-MODEL_NAME = os.environ.get("MODEL_NAME", "codellama/CodeLlama-7b-Instruct-hf")  # Default to CodeLlama if IASOQL not available
+MODEL_NAME = os.environ.get("MODEL_NAME", "iasoql-7b")  # Your proprietary model
 MODEL_PATH = os.environ.get("MODEL_PATH", "/runpod-volume/models")  # RunPod network volume
-HF_HOME = os.environ.get("HF_HOME", "/runpod-volume/huggingface")
+S3_MODEL_PATH = os.environ.get("S3_MODEL_PATH", "")  # S3 path to your model
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+AWS_REGION = os.environ.get("AWS_REGION", "us-west-2")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-# Set HuggingFace cache directory
-os.environ["HF_HOME"] = HF_HOME
-os.environ["TRANSFORMERS_CACHE"] = os.path.join(HF_HOME, "transformers")
 
 # Global model instance
 model = None
 tokenizer = None
+
+def download_model_from_s3():
+    """Download model from S3 if not exists locally"""
+    import boto3
+    import tarfile
+    
+    local_model_path = os.path.join(MODEL_PATH, MODEL_NAME)
+    
+    if os.path.exists(local_model_path):
+        logger.info(f"Model already exists at {local_model_path}")
+        return local_model_path
+    
+    if not S3_MODEL_PATH:
+        logger.error("S3_MODEL_PATH not set and model not found locally")
+        raise ValueError("Model not found. Please set S3_MODEL_PATH environment variable")
+    
+    logger.info(f"Downloading model from S3: {S3_MODEL_PATH}")
+    
+    try:
+        # Create S3 client
+        if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+            s3 = boto3.client(
+                's3',
+                aws_access_key_id=AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                region_name=AWS_REGION
+            )
+        else:
+            # Use IAM role if no credentials provided
+            s3 = boto3.client('s3', region_name=AWS_REGION)
+        
+        # Parse S3 path
+        if S3_MODEL_PATH.startswith("s3://"):
+            s3_path = S3_MODEL_PATH[5:]
+        else:
+            s3_path = S3_MODEL_PATH
+        
+        bucket_name, key = s3_path.split("/", 1)
+        
+        # Create model directory
+        os.makedirs(MODEL_PATH, exist_ok=True)
+        
+        # Download model files
+        download_path = os.path.join(MODEL_PATH, "iasoql-model.tar.gz")
+        logger.info(f"Downloading from bucket: {bucket_name}, key: {key}")
+        
+        s3.download_file(bucket_name, key, download_path)
+        
+        # Extract if it's a tar file
+        if download_path.endswith('.tar.gz'):
+            logger.info("Extracting model files...")
+            with tarfile.open(download_path, 'r:gz') as tar:
+                tar.extractall(MODEL_PATH)
+            os.remove(download_path)
+        
+        logger.info("Model downloaded and extracted successfully")
+        return local_model_path
+        
+    except Exception as e:
+        logger.error(f"Error downloading model from S3: {e}")
+        raise
 
 def load_model():
     """Load IASOQL model with optimizations"""
@@ -39,23 +99,19 @@ def load_model():
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
     
     try:
-        # Check if model exists locally
-        local_model_path = os.path.join(MODEL_PATH, MODEL_NAME.replace("/", "_"))
-        if os.path.exists(local_model_path):
-            logger.info(f"Loading model from local path: {local_model_path}")
-            model_name_or_path = local_model_path
-        else:
-            logger.info(f"Loading model from HuggingFace: {MODEL_NAME}")
-            model_name_or_path = MODEL_NAME
+        # Download model from S3 if needed
+        local_model_path = download_model_from_s3()
         
         # Load tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+        logger.info(f"Loading tokenizer from {local_model_path}")
+        tokenizer = AutoTokenizer.from_pretrained(local_model_path)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         
         # Load model with optimizations
+        logger.info(f"Loading model from {local_model_path}")
         model = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path,
+            local_model_path,
             torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
             device_map="auto",
             trust_remote_code=True,

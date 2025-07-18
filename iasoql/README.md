@@ -36,16 +36,36 @@ When templates don't match, uses fine-tuned model for:
 3. Configure:
    - **Name**: `iasoql-healthcare`
    - **Container Image**: Custom (upload this folder)
-   - **GPU Type**: RTX 3090 or better
+   - **GPU Type**: RTX 3090 or better (24GB VRAM minimum)
+   - **GPU Count**: 1
    - **Min Workers**: 0 (scales to zero)
-   - **Max Workers**: 3
-   - **Volume**: 20GB (for model caching)
+   - **Max Workers**: 2
+   - **Container Disk**: 20GB
+   - **Volume Disk**: 20GB (for model caching)
 
-4. Environment Variables:
+4. Environment Variables (REQUIRED):
    ```
-   MODEL_NAME=codellama/CodeLlama-7b-Instruct-hf  # Or your fine-tuned model
-   MODEL_PATH=/models
+   MODEL_NAME=iasoql-7b
+   MODEL_PATH=/runpod-volume/models
+   S3_MODEL_PATH=s3://your-bucket/path/to/iasoql-model.tar.gz
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=us-west-2
    ```
+
+### Model Storage Options
+
+#### Option 1: S3 Download (Recommended)
+The handler will automatically download your proprietary IASOQL model from S3 on first run:
+- Model is cached in the RunPod network volume
+- Subsequent starts use the cached model
+- Update S3_MODEL_PATH to point to your model archive
+
+#### Option 2: Pre-baked Docker Image
+Include the model in the Docker image during build:
+1. Place model files in `iasoql/model/` directory
+2. Update Dockerfile to COPY the model
+3. This increases image size but eliminates download time
 
 ### Testing
 

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: runpod-secret
+  namespace: iasovoice
+type: Opaque
+stringData:
+  api-key: "your-runpod-api-key-here"  # Change this!
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rasa-mcp-server
+  namespace: iasovoice
+  labels:
+    app: rasa-mcp-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rasa-mcp-server
+  template:
+    metadata:
+      labels:
+        app: rasa-mcp-server
+    spec:
+      containers:
+      - name: mcp-server
+        image: iaso/rasa-mcp:latest  # You'll build this
+        ports:
+        - containerPort: 8091
+          name: http
+        env:
+        - name: RASA_SERVER_URL
+          value: "http://rasa-server:5005"
+        - name: RASA_ACTION_SERVER_URL
+          value: "http://rasa-action-server:5055"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8091
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8091
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rasa-mcp-server
+  namespace: iasovoice
+  labels:
+    app: rasa-mcp-server
+spec:
+  selector:
+    app: rasa-mcp-server
+  ports:
+  - port: 8091
+    targetPort: 8091
+    name: http
+  type: ClusterIP

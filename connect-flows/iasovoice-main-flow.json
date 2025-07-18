@@ -1,0 +1,154 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "InitializeCall",
+  "Metadata": {
+    "entryPointPosition": {
+      "x": 40,
+      "y": 40
+    },
+    "ActionMetadata": {
+      "InitializeCall": {
+        "position": {
+          "x": 40,
+          "y": 40
+        }
+      },
+      "AuthenticatePatient": {
+        "position": {
+          "x": 280,
+          "y": 40
+        }
+      },
+      "StartMediaStreaming": {
+        "position": {
+          "x": 520,
+          "y": 40
+        }
+      },
+      "ProcessVoiceInteraction": {
+        "position": {
+          "x": 760,
+          "y": 40
+        }
+      },
+      "EndCallCleanup": {
+        "position": {
+          "x": 1000,
+          "y": 40
+        }
+      },
+      "DisconnectParticipant": {
+        "position": {
+          "x": 1240,
+          "y": 40
+        }
+      }
+    }
+  },
+  "Actions": {
+    "InitializeCall": {
+      "Type": "InvokeExternalResource",
+      "Parameters": {
+        "FunctionArn": "arn:aws:lambda:us-east-1:ACCOUNT_ID:function:iasovoice-connect-integration-ENV",
+        "TimeoutSeconds": "30",
+        "ResponseValidation": {
+          "ResponseType": "JSON"
+        }
+      },
+      "Identifier": "InitializeCall",
+      "Transitions": {
+        "NextAction": "AuthenticatePatient",
+        "Errors": [
+          {
+            "NextAction": "DisconnectParticipant",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    "AuthenticatePatient": {
+      "Type": "GetUserInput",
+      "Parameters": {
+        "Text": "Hello, this is your IASO health assistant. For your security, please enter your patient ID followed by the pound key.",
+        "InputTimeLimitSeconds": "30",
+        "DTMF": {
+          "MaxNumberOfDigits": 10,
+          "TerminatorDigits": [
+            "#"
+          ],
+          "InterDigitTimeoutSeconds": 5
+        }
+      },
+      "Identifier": "AuthenticatePatient",
+      "Transitions": {
+        "NextAction": "StartMediaStreaming",
+        "Errors": [
+          {
+            "NextAction": "DisconnectParticipant",
+            "ErrorType": "InputTimeLimitExceeded"
+          },
+          {
+            "NextAction": "DisconnectParticipant",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    "StartMediaStreaming": {
+      "Type": "StartMediaStreaming",
+      "Parameters": {
+        "Track": "FromCustomer",
+        "MediaStreamTypes": [
+          "Audio"
+        ],
+        "MediaStreamingStartType": "ConnectToSystem"
+      },
+      "Identifier": "StartMediaStreaming",
+      "Transitions": {
+        "NextAction": "ProcessVoiceInteraction",
+        "Errors": [
+          {
+            "NextAction": "DisconnectParticipant",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    "ProcessVoiceInteraction": {
+      "Type": "Wait",
+      "Parameters": {
+        "TimeoutSeconds": "1800"
+      },
+      "Identifier": "ProcessVoiceInteraction",
+      "Transitions": {
+        "NextAction": "EndCallCleanup",
+        "Errors": [
+          {
+            "NextAction": "EndCallCleanup",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    "EndCallCleanup": {
+      "Type": "StopMediaStreaming",
+      "Parameters": {},
+      "Identifier": "EndCallCleanup",
+      "Transitions": {
+        "NextAction": "DisconnectParticipant",
+        "Errors": [
+          {
+            "NextAction": "DisconnectParticipant",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    "DisconnectParticipant": {
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Identifier": "DisconnectParticipant",
+      "Transitions": {}
+    }
+  }
+}
