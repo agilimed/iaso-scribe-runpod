@@ -28,7 +28,7 @@ infrastructure/runpod/
 - **Purpose**: Medical document summarization
 
 ### 3. IASOQL (Text-to-SQL)
-- **Endpoint ID**: 86sthoj37yewbq
+- **Endpoint ID**: nefuor02sjocfd
 - **Model**: vivkris/iasoql-7B (private HuggingFace)
 - **Purpose**: Healthcare SQL generation for ClickHouse
 
@@ -40,7 +40,7 @@ Set these in your `.env` file:
 RUNPOD_API_KEY=your_api_key_here
 WHISPER_ENDPOINT_ID=rntxttrdl8uv3i
 PHI4_ENDPOINT_ID=tmmwa4q8ax5sg4
-IASOQL_ENDPOINT_ID=86sthoj37yewbq
+IASOQL_ENDPOINT_ID=nefuor02sjocfd
 ```
 
 ## Testing
