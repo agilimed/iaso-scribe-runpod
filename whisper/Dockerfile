@@ -27,8 +27,9 @@ RUN pip install --upgrade pip && \
     requests \
     numpy
 
-# Copy handler (relative to Dockerfile location)
-COPY handler.py /handler.py
+# Copy handler from whisper subdirectory
+# RunPod always builds from repository root, regardless of Dockerfile location
+COPY whisper/handler.py /handler.py
 
 # Verify correct handler was copied
 RUN echo "=== VERIFYING WHISPER HANDLER ===" && head -n 20 /handler.py && echo "=== END VERIFICATION ==="

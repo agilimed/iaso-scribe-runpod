@@ -3,7 +3,7 @@
 FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
 
 # Force cache invalidation
-ARG CACHEBUST=2
+ARG CACHEBUST=3
 
 # Set working directory
 WORKDIR /
@@ -26,10 +26,9 @@ RUN pip install --no-cache-dir \
     bitsandbytes==0.41.3 \
     tiktoken
 
-# Copy handler - try both paths for RunPod compatibility
-# If build context is set to /iasoql, use relative path
-# If build context is root, use subdirectory path
-COPY handler.py /handler.py
+# Copy handler from iasoql subdirectory
+# RunPod always builds from repository root, regardless of Dockerfile location
+COPY iasoql/handler.py /handler.py
 
 # Verify correct handler was copied
 RUN echo "=== VERIFYING IASOQL HANDLER ===" && head -n 20 /handler.py && echo "=== END VERIFICATION ==="
