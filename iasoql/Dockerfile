@@ -1,6 +1,9 @@
 # IASOQL RunPod Docker Image
-# Build: 2025-07-18-v2 - Fixed handler isolation
+# Build: 2025-07-18-v3 - Force rebuild with IASOQL handler
 FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+
+# Force cache invalidation
+ARG CACHEBUST=1
 
 # Set working directory
 WORKDIR /
@@ -25,6 +28,9 @@ RUN pip install --no-cache-dir \
 
 # Copy handler
 COPY handler.py /handler.py
+
+# Verify correct handler was copied
+RUN head -n 20 /handler.py && echo "=== HANDLER VERIFICATION ==="
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
