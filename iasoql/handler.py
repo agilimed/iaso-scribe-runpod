@@ -3,6 +3,11 @@ IASOQL RunPod Handler - Healthcare SQL Generation
 Optimized for ClickHouse queries on FHIR data
 """
 
+# CRITICAL: This is the IASOQL handler, NOT Phi-4!
+print("="*80)
+print("IASOQL HANDLER LOADED - If you see Phi-4 messages, wrong handler is running!")
+print("="*80)
+
 import runpod
 import torch
 import json
@@ -51,12 +56,17 @@ def load_model():
         # Get HuggingFace token from environment
         hf_token = os.environ.get("HUGGINGFACE_TOKEN") or os.environ.get("HF_TOKEN")
         
+        if hf_token:
+            logger.info("HuggingFace token found in environment")
+        else:
+            logger.warning("No HuggingFace token found - this may fail for private models")
+        
         # Load tokenizer
         logger.info(f"Loading tokenizer from {MODEL_NAME}")
         tokenizer = AutoTokenizer.from_pretrained(
             MODEL_NAME,
             cache_dir=CACHE_DIR,
-            use_auth_token=hf_token,
+            token=hf_token,  # Use 'token' instead of deprecated 'use_auth_token'
             trust_remote_code=True
         )
         if tokenizer.pad_token is None:
@@ -71,7 +81,7 @@ def load_model():
             device_map="auto",
             trust_remote_code=True,
             low_cpu_mem_usage=True,
-            use_auth_token=hf_token
+            token=hf_token  # Use 'token' instead of deprecated 'use_auth_token'
         )
         
         model.eval()
