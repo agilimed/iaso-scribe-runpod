@@ -11,8 +11,11 @@ RUN pip install --upgrade pip && \
     requests \
     torch
 
-# Add handler
-COPY handler.py /
+# Copy handler from phi4 subdirectory (relative to repo root)
+COPY phi4/handler.py /handler.py
+
+# Verify correct handler was copied
+RUN echo "=== VERIFYING PHI-4 HANDLER ===" && head -n 20 /handler.py && echo "=== END VERIFICATION ==="
 
 # Environment
 ENV PYTHONUNBUFFERED=1
