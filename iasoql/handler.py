@@ -11,195 +11,22 @@ import re
 from typing import Dict, Any, List, Optional
 import logging
 import os
-import subprocess
-import tarfile
-import shutil
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Model configuration
-MODEL_NAME = os.environ.get("MODEL_NAME", "iasoql-7b")  # Your proprietary model
-MODEL_PATH = os.environ.get("MODEL_PATH", "/runpod-volume/models")  # RunPod network volume
-MODEL_DOWNLOAD_URL = os.environ.get("MODEL_DOWNLOAD_URL", "")  # Pre-signed URL or S3 path
-S3_MODEL_PATH = os.environ.get("S3_MODEL_PATH", "")  # S3 path (deprecated, use MODEL_DOWNLOAD_URL)
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
-AWS_REGION = os.environ.get("AWS_REGION", "us-west-2")
+# Model configuration - Using HuggingFace like Phi-4/Whisper
+MODEL_NAME = "vivkris/iasoql-7B"  # Private HuggingFace repo
+CACHE_DIR = "/runpod-volume/huggingface-cache" if os.path.exists("/runpod-volume") else "/tmp/huggingface-cache"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Global model instance
 model = None
 tokenizer = None
 
-def download_model_from_url():
-    """Download model from pre-signed URL or S3"""
-    local_model_path = os.path.join(MODEL_PATH, MODEL_NAME)
-    
-    # Check if model already exists
-    if os.path.exists(local_model_path) and os.path.exists(os.path.join(local_model_path, "config.json")):
-        logger.info(f"Model already exists at {local_model_path}")
-        return local_model_path
-    
-    # Prefer MODEL_DOWNLOAD_URL over S3_MODEL_PATH
-    download_url = MODEL_DOWNLOAD_URL or S3_MODEL_PATH
-    
-    if not download_url:
-        logger.error("MODEL_DOWNLOAD_URL not set and model not found locally")
-        raise ValueError("Model not found. Please set MODEL_DOWNLOAD_URL environment variable")
-    
-    logger.info(f"Downloading model from: {download_url[:50]}...")  # Log first 50 chars for security
-    
-    try:
-        # Create model directory
-        os.makedirs(MODEL_PATH, exist_ok=True)
-        temp_path = os.path.join(MODEL_PATH, "temp_download")
-        
-        # Check if it's a pre-signed URL (contains query parameters)
-        if "?" in download_url and "http" in download_url:
-            # It's a pre-signed URL - download directly
-            logger.info("Detected pre-signed URL, downloading with wget...")
-            
-            # Download to temp file
-            subprocess.run([
-                "wget", "-q", "--show-progress", "-O", temp_path, download_url
-            ], check=True)
-            
-            # Check if it's a tar.gz file
-            if tarfile.is_tarfile(temp_path):
-                logger.info("Extracting tar.gz archive...")
-                with tarfile.open(temp_path, 'r:gz') as tar:
-                    tar.extractall(MODEL_PATH)
-                os.remove(temp_path)
-                
-                # Find the extracted model directory
-                extracted_dirs = [d for d in os.listdir(MODEL_PATH) 
-                                if os.path.isdir(os.path.join(MODEL_PATH, d)) 
-                                and os.path.exists(os.path.join(MODEL_PATH, d, "config.json"))]
-                
-                if extracted_dirs:
-                    # Rename to expected model name
-                    extracted_path = os.path.join(MODEL_PATH, extracted_dirs[0])
-                    if extracted_path != local_model_path:
-                        shutil.move(extracted_path, local_model_path)
-                else:
-                    raise ValueError("No valid model directory found in archive")
-            else:
-                raise ValueError("Downloaded file is not a tar.gz archive")
-                
-        elif download_url.startswith("s3://"):
-            # It's an S3 path - use boto3 (fallback to original method)
-            return download_model_from_s3()
-        else:
-            # Assume it's a direct download URL
-            logger.info("Downloading from direct URL...")
-            subprocess.run([
-                "wget", "-q", "--show-progress", "-O", temp_path, download_url
-            ], check=True)
-            
-            # Extract if tar.gz
-            if tarfile.is_tarfile(temp_path):
-                logger.info("Extracting tar.gz archive...")
-                with tarfile.open(temp_path, 'r:gz') as tar:
-                    tar.extractall(MODEL_PATH)
-                os.remove(temp_path)
-                
-                # Find and rename extracted directory
-                extracted_dirs = [d for d in os.listdir(MODEL_PATH) 
-                                if os.path.isdir(os.path.join(MODEL_PATH, d)) 
-                                and os.path.exists(os.path.join(MODEL_PATH, d, "config.json"))]
-                
-                if extracted_dirs:
-                    extracted_path = os.path.join(MODEL_PATH, extracted_dirs[0])
-                    if extracted_path != local_model_path:
-                        shutil.move(extracted_path, local_model_path)
-                        
-        logger.info(f"Model downloaded successfully to {local_model_path}")
-        return local_model_path
-        
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error downloading model: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Error processing model: {e}")
-        raise
-
-def download_model_from_s3():
-    """Legacy S3 download method - kept for backward compatibility"""
-    import boto3
-    
-    local_model_path = os.path.join(MODEL_PATH, MODEL_NAME)
-    
-    if not S3_MODEL_PATH:
-        return None
-    
-    logger.info(f"Downloading model from S3: {S3_MODEL_PATH}")
-    
-    try:
-        # Create S3 client with credentials (required since bucket is not public)
-        if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
-            s3 = boto3.client(
-                's3',
-                aws_access_key_id=AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-                region_name=AWS_REGION
-            )
-        else:
-            # Use IAM role if no credentials provided
-            s3 = boto3.client('s3', region_name=AWS_REGION)
-        
-        # Parse S3 path
-        if S3_MODEL_PATH.startswith("s3://"):
-            s3_path = S3_MODEL_PATH[5:]
-        else:
-            s3_path = S3_MODEL_PATH
-        
-        # For directory-style model path
-        if s3_path.endswith("/"):
-            s3_path = s3_path[:-1]
-        
-        bucket_name, prefix = s3_path.split("/", 1)
-        
-        # Create model directory
-        os.makedirs(local_model_path, exist_ok=True)
-        
-        # List all files in the model directory
-        logger.info(f"Listing files in bucket: {bucket_name}, prefix: {prefix}/")
-        paginator = s3.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=bucket_name, Prefix=f"{prefix}/")
-        
-        # Download each file
-        files_downloaded = 0
-        for page in pages:
-            if 'Contents' in page:
-                for obj in page['Contents']:
-                    key = obj['Key']
-                    # Skip directories
-                    if key.endswith('/'):
-                        continue
-                    
-                    # Get relative path
-                    relative_path = key[len(prefix)+1:]  # Remove prefix and slash
-                    local_file_path = os.path.join(local_model_path, relative_path)
-                    
-                    # Create subdirectories if needed
-                    os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
-                    
-                    # Download file
-                    logger.info(f"Downloading {relative_path}...")
-                    s3.download_file(bucket_name, key, local_file_path)
-                    files_downloaded += 1
-        
-        logger.info(f"Downloaded {files_downloaded} files successfully")
-        return local_model_path
-        
-    except Exception as e:
-        logger.error(f"Error downloading model from S3: {e}")
-        raise
-
 def load_model():
-    """Load IASOQL model with optimizations"""
+    """Load IASOQL model from HuggingFace"""
     global model, tokenizer
     
     logger.info(f"Loading model: {MODEL_NAME}")
@@ -207,23 +34,29 @@ def load_model():
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
     
     try:
-        # Download model if needed
-        local_model_path = download_model_from_url()
+        # Get HuggingFace token from environment
+        hf_token = os.environ.get("HUGGINGFACE_TOKEN") or os.environ.get("HF_TOKEN")
         
         # Load tokenizer
-        logger.info(f"Loading tokenizer from {local_model_path}")
-        tokenizer = AutoTokenizer.from_pretrained(local_model_path)
+        logger.info(f"Loading tokenizer from {MODEL_NAME}")
+        tokenizer = AutoTokenizer.from_pretrained(
+            MODEL_NAME,
+            cache_dir=CACHE_DIR,
+            use_auth_token=hf_token
+        )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         
         # Load model with optimizations
-        logger.info(f"Loading model from {local_model_path}")
+        logger.info(f"Loading model from {MODEL_NAME}")
         model = AutoModelForCausalLM.from_pretrained(
-            local_model_path,
+            MODEL_NAME,
+            cache_dir=CACHE_DIR,
             torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
             device_map="auto",
             trust_remote_code=True,
-            low_cpu_mem_usage=True
+            low_cpu_mem_usage=True,
+            use_auth_token=hf_token
         )
         
         model.eval()

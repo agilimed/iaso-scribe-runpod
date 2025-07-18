@@ -1,5 +1,5 @@
-# Pre-signed URLs (contain temporary credentials)
-presigned_url.txt
+# Upload temporary directory
+iasoql-upload-temp/
 
 # Model files
 model/

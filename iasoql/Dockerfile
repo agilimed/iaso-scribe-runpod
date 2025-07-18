@@ -19,17 +19,13 @@ RUN pip install --no-cache-dir \
     accelerate==0.25.0 \
     sentencepiece==0.1.99 \
     protobuf==3.20.3 \
-    bitsandbytes==0.41.3 \
-    boto3==1.28.0
+    bitsandbytes==0.41.3
 
 # Copy handler
 COPY handler.py /handler.py
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV MODEL_NAME=iasoql-7b
-ENV MODEL_PATH=/runpod-volume/models
-ENV AWS_REGION=us-west-2
 
 # Start handler
 CMD ["python", "-u", "/handler.py"]

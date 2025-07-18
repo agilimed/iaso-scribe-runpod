@@ -29,60 +29,51 @@ When templates don't match, uses fine-tuned model for:
 
 ## Deployment
 
-### RunPod Setup
+### Quick Deployment Steps
 
-1. Go to [RunPod Console](https://www.runpod.io/console/serverless)
-2. Click "New Endpoint"
-3. Configure:
-   - **Name**: `iasoql-healthcare`
-   - **Container Image**: Custom (upload this folder)
-   - **GPU Type**: RTX 3090 or better (24GB VRAM minimum)
-   - **GPU Count**: 1
-   - **Min Workers**: 0 (scales to zero)
-   - **Max Workers**: 2
-   - **Container Disk**: 20GB
-   - **Volume Disk**: 20GB (for model caching)
-
-4. Environment Variables (REQUIRED):
-   ```
-   MODEL_NAME=iasoql-7b
-   MODEL_PATH=/runpod-volume/models
-   MODEL_DOWNLOAD_URL=<pre-signed-url-here>
-   ```
-   
-   To generate the pre-signed URL:
+1. **Upload Model to HuggingFace** (if not already done):
    ```bash
-   # From your local machine with AWS credentials:
-   cd iasoql/
-   python generate_presigned_url.py
+   # Set your HuggingFace token
+   export HUGGINGFACE_TOKEN=your_hf_token_here
    
-   # This will create a tar.gz archive and generate a 24-hour pre-signed URL
-   # Copy the URL and paste it as MODEL_DOWNLOAD_URL
+   # Upload model from S3 to HuggingFace
+   python upload_to_huggingface.py
    ```
 
-### Model Storage Options
+2. **Build and Push Docker Image**:
+   ```bash
+   docker build -t iasoql-healthcare .
+   docker tag iasoql-healthcare:latest <your-registry>/iasoql-healthcare:latest
+   docker push <your-registry>/iasoql-healthcare:latest
+   ```
 
-#### Option 1: Pre-signed URL (Recommended)
-The handler will automatically download your proprietary IASOQL model using a pre-signed URL:
-- No AWS credentials needed in RunPod
-- Model is cached in the RunPod network volume
-- Subsequent starts use the cached model
-- Generate new pre-signed URLs as needed (24-hour expiry)
+3. **Deploy to RunPod**:
+   - Go to [RunPod Console](https://www.runpod.io/console/serverless)
+   - Click "New Endpoint"
+   - Configure:
+     - **Name**: `iasoql-healthcare`
+     - **Container Image**: `<your-registry>/iasoql-healthcare:latest`
+     - **GPU Type**: RTX 3090 or better (24GB VRAM minimum)
+     - **GPU Count**: 1
+     - **Min Workers**: 0 (scales to zero)
+     - **Max Workers**: 2
+     - **Container Disk**: 20GB
+     - **Volume Disk**: 50GB (for model caching)
+   
+   - **Environment Variables**:
+     ```
+     HUGGINGFACE_TOKEN=your_hf_token_here
+     ```
 
-#### Option 2: Direct S3 Access (Requires AWS Credentials)
-Set these additional environment variables:
-```
-S3_MODEL_PATH=s3://nexuscare-ai-models/models/iasoql-merged-complete/
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_REGION=us-west-2
-```
+### Model Information
 
-#### Option 3: Pre-baked Docker Image
-Include the model in the Docker image during build:
-1. Place model files in `iasoql/model/` directory
-2. Update Dockerfile to COPY the model
-3. This increases image size but eliminates download time
+IASOQL is hosted on HuggingFace at `vivkris/iasoql-7B` (private repository).
+
+The model:
+- Is derived from XiYanSQL-QwenCoder-7B-2504 (Apache 2.0 licensed)
+- Fine-tuned specifically for healthcare SQL generation
+- Optimized for ClickHouse queries on FHIR data
+- Requires HuggingFace token for access
 
 ### Testing
 
