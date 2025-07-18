@@ -24,8 +24,12 @@ except ImportError:
 
 # Model configuration - Using HuggingFace like Phi-4/Whisper
 MODEL_NAME = "vivkris/iasoql-7B"  # Private HuggingFace repo
-CACHE_DIR = "/runpod-volume/huggingface-cache" if os.path.exists("/runpod-volume") else "/tmp/huggingface-cache"
+# Use unique subdirectory for IASOQL to avoid conflicts
+CACHE_DIR = "/runpod-volume/iasoql/cache" if os.path.exists("/runpod-volume") else "/tmp/iasoql-cache"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Ensure cache directory exists
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Global model instance
 model = None
@@ -39,6 +43,7 @@ def load_model():
     logger.info("IASOQL Handler Starting - Healthcare SQL Generation")
     logger.info("="*60)
     logger.info(f"Loading model: {MODEL_NAME}")
+    logger.info(f"Cache directory: {CACHE_DIR}")
     logger.info(f"Device: {DEVICE}")
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
     

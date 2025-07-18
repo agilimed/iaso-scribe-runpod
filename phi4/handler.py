@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 # Model configuration
 PHI_MODEL_URL = "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-plus-GGUF/resolve/main/microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf"
-MODEL_DIR = "/runpod-volume/models" if os.path.exists("/runpod-volume") else "/models"
+# Use unique subdirectory for Phi-4 to avoid conflicts
+MODEL_DIR = "/runpod-volume/phi4/models" if os.path.exists("/runpod-volume") else "/models/phi4"
 PHI_MODEL_PATH = os.path.join(MODEL_DIR, "microsoft_Phi-4-reasoning-plus-Q6_K_L.gguf")
 
 # Initialize model globally
