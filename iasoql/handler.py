@@ -96,15 +96,28 @@ def load_model():
         
         # Load model with optimizations
         logger.info(f"Loading model from {MODEL_NAME}")
+        # Check if accelerate is available
+        try:
+            import accelerate
+            device_map = "auto"
+            logger.info("Accelerate available, using device_map='auto'")
+        except ImportError:
+            device_map = None
+            logger.warning("Accelerate not available, loading to default device")
+            
         model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
             cache_dir=CACHE_DIR,
             torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
-            device_map="auto",
+            device_map=device_map,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
             token=hf_token  # Use 'token' instead of deprecated 'use_auth_token'
         )
+        
+        # Move to device if not using device_map
+        if device_map is None and DEVICE == "cuda":
+            model = model.to(DEVICE)
         
         model.eval()
         logger.info("Model loaded successfully")
